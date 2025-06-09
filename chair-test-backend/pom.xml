@@ -10,10 +10,12 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.chair</groupId>
-    <artifactId>chairdada</artifactId>
+    <artifactId>chair-test</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>chairdada</name>
+    <name>chair-test</name>
     <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
