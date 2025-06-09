@@ -1,0 +1,33 @@
+.indexPage {
+  //background: black;
+  background-image: url("http://img0.baidu.com/it/u=385561045,1218918206&fm=253&app=138&f=JPEG?w=800&h=1427");
+  width: 100vw;
+  //height: 100vh;
+  background-size: 100% auto;
+  background-position: center;
+  background-repeat: repeat-y;
+
+  .text-contain {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .title {
+    color: white;
+    padding-top: 48px;
+    text-align: center;
+  }
+
+  .subTitle {
+    color: white;
+    margin-bottom: 48px;
+  }
+
+  .enterBtn {
+    width: 60vw;
+    margin-top: 40px;
+  }
+  .headerBg {
+    width: 100vw;
+    height: 50vh;
+  }
+}
+
