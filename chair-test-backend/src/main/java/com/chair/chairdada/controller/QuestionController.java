@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chair.chairdada.annotation.AuthCheck;
+import com.chair.chairdada.bigmodel.DeepSeekUtil;
 import com.chair.chairdada.common.BaseResponse;
 import com.chair.chairdada.common.DeleteRequest;
 import com.chair.chairdada.common.ErrorCode;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -38,7 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 题目接口
- *
  */
 @RestController
 @RequestMapping("/question")
@@ -62,6 +63,9 @@ public class QuestionController {
 
     @Resource
     private Scheduler userScheduler;
+
+    @Resource
+    DeepSeekUtil deepSeekUtil;
 
     // region 增删改查
 
@@ -459,4 +463,9 @@ public class QuestionController {
         return sseEmitter;
     }
     // endregion
+
+    @GetMapping("/ai_generate/bd/SSE")
+    public Flux<String> askQuestion(String question, HttpServletRequest request) {
+        return deepSeekUtil.askDeepSeekSteam(question);
+    }
 }
