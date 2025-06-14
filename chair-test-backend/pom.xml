@@ -63,29 +63,6 @@
 <!--            <artifactId>caffeine</artifactId>-->
 <!--            <version>2.9.2</version>-->
 <!--        </dependency>-->
-        <!-- elasticsearch-->
-        <!-- ONNX Runtime (CPU版本) -->
-<!--        <dependency>-->
-<!--            <groupId>com.microsoft.onnxruntime</groupId>-->
-<!--            <artifactId>onnxruntime</artifactId>-->
-<!--            <version>1.15.1</version>-->
-<!--        </dependency>-->
-
-        <!-- ONNX Runtime (GPU版本，如果需要) -->
-<!--        <dependency>-->
-<!--            <groupId>com.microsoft.onnxruntime</groupId>-->
-<!--            <artifactId>onnxruntime</artifactId>-->
-<!--            <version>1.15.1</version>-->
-<!--            <classifier>gpu</classifier>-->
-<!--        </dependency>-->
-
-        <!-- 用于处理JSON配置 -->
-<!--        <dependency>-->
-<!--            <groupId>com.fasterxml.jackson.core</groupId>-->
-<!--            <artifactId>jackson-databind</artifactId>-->
-<!--            <version>2.15.2</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
