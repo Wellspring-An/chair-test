@@ -26,10 +26,10 @@ spring:
   # todo 需替换配置，然后取消注释
   redis:
     database: 1
-    host: localhost
+    host: 127.0.0.1
     port: 6379
     timeout: 5000
-    password:
+    password: 123456
   # Elasticsearch 配置
   # todo 需替换配置，然后取消注释
 #  elasticsearch:
@@ -130,10 +130,6 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.chair.chairdada.controller
-
-# AI 配置
-ai:
-  bigModelKey: 87aeab63d5754e3c969873035f39ed18.gFXWm4ZzJvMA88AO
 
 chair:
   token-name: chair-token

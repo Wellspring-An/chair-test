@@ -1,13 +1,10 @@
 package com.chair.chairdada;
 
-import com.chair.chairdada.bigmodel.DeepSeekUtil;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 
 //@SpringBootTest

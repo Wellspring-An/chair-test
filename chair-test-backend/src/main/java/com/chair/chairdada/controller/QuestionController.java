@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chair.chairdada.annotation.AuthCheck;
-import com.chair.chairdada.bigmodel.DeepSeekUtil;
+import com.chair.chairdada.bigmodel.AiManager;
 import com.chair.chairdada.common.BaseResponse;
 import com.chair.chairdada.common.DeleteRequest;
 import com.chair.chairdada.common.ErrorCode;
@@ -12,7 +12,6 @@ import com.chair.chairdada.common.ResultUtils;
 import com.chair.chairdada.constant.UserConstant;
 import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.exception.ThrowUtils;
-import com.chair.chairdada.manager.AiManager;
 import com.chair.chairdada.model.dto.question.*;
 import com.chair.chairdada.model.entity.App;
 import com.chair.chairdada.model.entity.Question;
@@ -22,10 +21,8 @@ import com.chair.chairdada.model.vo.QuestionVO;
 import com.chair.chairdada.service.AppService;
 import com.chair.chairdada.service.QuestionService;
 import com.chair.chairdada.service.UserService;
-import com.zhipu.oapi.service.v4.model.ModelData;
-import io.reactivex.Flowable;
-import io.reactivex.Scheduler;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
@@ -65,7 +62,7 @@ public class QuestionController {
     private Scheduler userScheduler;
 
     @Resource
-    DeepSeekUtil deepSeekUtil;
+    AiManager deepSeekUtil;
 
     // region 增删改查
 
@@ -270,19 +267,19 @@ public class QuestionController {
     private static final String GENERATE_QUESTION_SYSTEM_MESSAGE = "你是一位严谨的出题专家，我会给你如下信息：\n" +
             "```\n" +
             "应用名称，\n" +
-            "【【【应用描述】】】，\n" +
+            "应用描述，\n" +
             "应用类别，\n" +
             "要生成的题目数，\n" +
             "每个题目的选项数\n" +
             "```\n" +
             "\n" +
             "请你根据上述信息，按照以下步骤来出题：\n" +
-            "1. 要求：题目和选项尽可能地短，题目不要包含序号，每题的选项数以我提供的为主，题目不能重复，生成的题目不要跟应用名称类似，要真实的MBTI题目\n" +
+            "1. 要求：题目和选项尽可能地短，题目不要包含序号，每题的选项数以我提供的为主，题目不能重复，生成的题目不要跟应用名称类似，测试题目跟选项不要有'应用名称'\n" +
             "2. 严格按照下面的 json 格式输出题目和选项\n" +
             "```\n" +
-            "[{\"options\":[{\"value\":\"选项内容\",\"key\":\"A\"},{\"value\":\"\",\"key\":\"B\"}],\"title\":\"题目标题\"}]\n" +
+            "[{\"options\":[{\"value\":\"选项内容\",\"key\":\"A\"},{\"value\":\"选项内容\",\"key\":\"B\"}],\"title\":\"题目标题\"}]\n" +
             "```\n" +
-            "title 是题目，options 是选项，每个选项的 key 按照英文字母序（比如 A、B、C、D）以此类推，value 是选项内容\n" +
+            "title 是题目，options 是选项，每个选项的 key 按照英文字母序（比如 A、B、C、D）以此类推，value 是选项内容，value不要含有答案或问题，value和key中不能是空的，题目和选项数严格按照我给的数字生成\n" +
             "3. 检查题目是否包含序号或者题号，若包含序号或题号则去除序号或题号\n" +
             "4. 返回的题目列表格式必须为 JSON 数组";
 
@@ -297,11 +294,11 @@ public class QuestionController {
      */
     private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {
         StringBuilder userMessage = new StringBuilder();
-        userMessage.append(app.getAppName()).append("\n");
-        userMessage.append(app.getAppDesc()).append("\n");
-        userMessage.append(AppTypeEnum.getEnumByValue(app.getAppType()).getText() + "类").append("\n");
-        userMessage.append(questionNumber).append("\n");
-        userMessage.append(optionNumber);
+        userMessage.append("应用名称:" + app.getAppName()).append("\n");
+        userMessage.append("应用描述:" + app.getAppDesc()).append("\n");
+        userMessage.append("应用类别:" + AppTypeEnum.getEnumByValue(app.getAppType()).getText() + "类").append("\n");
+        userMessage.append("要生成的题目数:" + questionNumber).append("\n");
+        userMessage.append("每个题目的选项数:" + optionNumber);
         return userMessage.toString();
     }
 
@@ -319,7 +316,7 @@ public class QuestionController {
         // 封装 Prompt
         String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
         // AI 生成
-        String result = aiManager.doSyncRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
+        String result = aiManager.askDeepSeek(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b);
         log.info("ai生成题目：{}", result);
         // 截取需要的 JSON 信息
         int start = result.indexOf("[");
@@ -346,20 +343,19 @@ public class QuestionController {
         // 建立 SSE 连接对象，0 表示永不超时
         SseEmitter sseEmitter = new SseEmitter(0L);
         // AI 生成，SSE 流式返回
-        Flowable<ModelData> modelDataFlowable = aiManager.doStreamRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
+        Flowable<String> stringFlowable = aiManager.askDeepSeekSteamRx(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b, true);
         // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
         AtomicInteger counter = new AtomicInteger(0);
         // 拼接完整题目
         StringBuilder stringBuilder = new StringBuilder();
 
-        // 默认全局线程池
+//        // 默认全局线程池
         Scheduler scheduler = userScheduler;
         if ("admin".equals(loginUser.getUserRole())) {
             scheduler = vipScheduler;
         }
-        modelDataFlowable
+        stringFlowable
                 .observeOn(scheduler)
-                .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
                 .map(message -> message.replaceAll("\\s", ""))
                 .filter(StrUtil::isNotBlank)
                 .flatMap(message -> {
@@ -393,79 +389,84 @@ public class QuestionController {
         return sseEmitter;
     }
 
-    // 仅测试隔离线程池使用
-    @Deprecated
-    @GetMapping("/ai_generate/sse/test")
-    public SseEmitter aiGenerateQuestionSSETest(AiGenerateQuestionRequest aiGenerateQuestionRequest,
-                                                boolean isVip) {
-        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
-        // 获取参数
-        Long appId = aiGenerateQuestionRequest.getAppId();
-        int questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
-        int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
-        // 获取应用信息
-        App app = appService.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
-        // 封装 Prompt
-        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
-        // 建立 SSE 连接对象，0 表示永不超时
-        SseEmitter sseEmitter = new SseEmitter(0L);
-        // AI 生成，SSE 流式返回
-        Flowable<ModelData> modelDataFlowable = aiManager.doStreamRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
-        // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
-        AtomicInteger counter = new AtomicInteger(0);
-        // 拼接完整题目
-        StringBuilder stringBuilder = new StringBuilder();
-        // 默认全局线程池
-        Scheduler scheduler = Schedulers.single();
-        if (isVip) {
-            scheduler = vipScheduler;
-        }
-        modelDataFlowable
-                .observeOn(scheduler)
-                .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
-                .map(message -> message.replaceAll("\\s", ""))
-                .filter(StrUtil::isNotBlank)
-                .flatMap(message -> {
-                    List<Character> characterList = new ArrayList<>();
-                    for (char c : message.toCharArray()) {
-                        characterList.add(c);
-                    }
-                    return Flowable.fromIterable(characterList);
-                })
-                .doOnNext(c -> {
-                    // 如果是 '{'，计数器 + 1
-                    if (c == '{') {
-                        counter.addAndGet(1);
-                    }
-                    if (counter.get() > 0) {
-                        stringBuilder.append(c);
-                    }
-                    if (c == '}') {
-                        counter.addAndGet(-1);
-                        if (counter.get() == 0) {
-                            // 输出当前线程的名称
-                            System.out.println(Thread.currentThread().getName());
-                            // 模拟普通用户阻塞
-                            if (!isVip) {
-                                Thread.sleep(10000L);
-                            }
-                            // 可以拼接题目，并且通过 SSE 返回给前端
-                            sseEmitter.send(JSONUtil.toJsonStr(stringBuilder.toString()));
-                            // 重置，准备拼接下一道题
-                            stringBuilder.setLength(0);
-                        }
-                    }
-                })
-                .doOnError((e) -> log.error("sse error", e))
-                .doOnComplete(sseEmitter::complete)
-                .subscribe();
-        return sseEmitter;
-    }
+//    // 仅测试隔离线程池使用
+//    @Deprecated
+//    @GetMapping("/ai_generate/sse/test")
+//    public SseEmitter aiGenerateQuestionSSETest(AiGenerateQuestionRequest aiGenerateQuestionRequest,
+//                                                boolean isVip) {
+//        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+//        // 获取参数
+//        Long appId = aiGenerateQuestionRequest.getAppId();
+//        int questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+//        int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+//        // 获取应用信息
+//        App app = appService.getById(appId);
+//        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+//        // 封装 Prompt
+//        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+//        // 建立 SSE 连接对象，0 表示永不超时
+//        SseEmitter sseEmitter = new SseEmitter(0L);
+//        // AI 生成，SSE 流式返回
+//        Flowable<ModelData> modelDataFlowable = aiManager.doStreamRequest(GENERATE_QUESTION_SYSTEM_MESSAGE, userMessage, null);
+//        // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
+//        AtomicInteger counter = new AtomicInteger(0);
+//        // 拼接完整题目
+//        StringBuilder stringBuilder = new StringBuilder();
+//        // 默认全局线程池
+//        Scheduler scheduler = Schedulers.single();
+//        if (isVip) {
+//            scheduler = vipScheduler;
+//        }
+//        modelDataFlowable
+//                .observeOn(scheduler)
+//                .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
+//                .map(message -> message.replaceAll("\\s", ""))
+//                .filter(StrUtil::isNotBlank)
+//                .flatMap(message -> {
+//                    List<Character> characterList = new ArrayList<>();
+//                    for (char c : message.toCharArray()) {
+//                        characterList.add(c);
+//                    }
+//                    return Flowable.fromIterable(characterList);
+//                })
+//                .doOnNext(c -> {
+//                    // 如果是 '{'，计数器 + 1
+//                    if (c == '{') {
+//                        counter.addAndGet(1);
+//                    }
+//                    if (counter.get() > 0) {
+//                        stringBuilder.append(c);
+//                    }
+//                    if (c == '}') {
+//                        counter.addAndGet(-1);
+//                        if (counter.get() == 0) {
+//                            // 输出当前线程的名称
+//                            System.out.println(Thread.currentThread().getName());
+//                            // 模拟普通用户阻塞
+//                            if (!isVip) {
+//                                Thread.sleep(10000L);
+//                            }
+//                            // 可以拼接题目，并且通过 SSE 返回给前端
+//                            sseEmitter.send(JSONUtil.toJsonStr(stringBuilder.toString()));
+//                            // 重置，准备拼接下一道题
+//                            stringBuilder.setLength(0);
+//                        }
+//                    }
+//                })
+//                .doOnError((e) -> log.error("sse error", e))
+//                .doOnComplete(sseEmitter::complete)
+//                .subscribe();
+//        return sseEmitter;
+//    }
     // endregion
 
     @GetMapping("/ai_generate/bd/SSE")
-    public Flux<String> askQuestion(String question, HttpServletRequest request) {
-        return deepSeekUtil.askDeepSeekSteam(question);
+    public Flowable<String> askQuestionSSE(String question, HttpServletRequest request) {
+        return deepSeekUtil.askDeepSeekSteamRx(question, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b, true);
+    }
+
+    @GetMapping("/ai_generate/bd")
+    public String askQuestion(String question, HttpServletRequest request) {
+        return deepSeekUtil.askDeepSeek(question, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b);
     }
 }
