@@ -7,6 +7,7 @@ import com.chair.chairdada.exception.ThrowUtils;
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import okhttp3.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -23,11 +24,13 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class AiManager {
-    private static final String API_URL = "http://localhost:11434";
 
-    public static final String DeepSeekR1_8b = "deepseek-r1:8b";
-    public static final String DeepSeekR1_7b = "deepseek-r1:7b";
-    public static final String DeepSeekR1_1b5b = "deepseek-r1:1.5b";
+    @Value("${bigModel.url}")
+    private String apiUrl;
+
+    @Value("${bigModel.modelName}")
+    private String modelName;
+
     private static final List<String> modelList = new ArrayList<>();
 
     // 稳定的随机数
@@ -37,14 +40,7 @@ public class AiManager {
     private static final float UNSTABLE_TEMPERATURE = 0.99f;
 
 
-    @Bean
-    public void initModels() {
-        modelList.add(DeepSeekR1_8b);
-        modelList.add(DeepSeekR1_7b);
-        modelList.add(DeepSeekR1_1b5b);
-    }
-
-    public String askDeepSeek(String userMessage,String sysMessage,String model) {
+    public String askDeepSeek(String userMessage,String sysMessage) {
         List<AiMessage> messages = List.of(
                 new AiMessage("system", sysMessage),
                 new AiMessage("user", userMessage)
@@ -53,18 +49,12 @@ public class AiManager {
         jsonMessages.set("messages",messages);
         JSONObject jsonObject = new JSONObject();
 
-        for (String s : modelList) {
-            if (s.equals(model)) {
-                jsonObject.set("model", s);         // 指定模型
-                jsonObject.set("stream", false);    // 关闭流式响应
-                jsonObject.set("temperature", 0.7); // 控制生成随机性
-                jsonObject.set("prompt", jsonMessages.toString());
-            } else {
-                ThrowUtils.throwIf(true, ErrorCode.PARAMS_ERROR, "模型不存在");
-            }
-        }
+        jsonObject.set("model", modelName);         // 指定模型
+        jsonObject.set("stream", false);    // 关闭流式响应
+        jsonObject.set("temperature", 0.7); // 控制生成随机性
+        jsonObject.set("prompt", jsonMessages.toString());
 
-        String response = HttpRequest.post(API_URL + "/api/generate")
+        String response = HttpRequest.post(apiUrl + "/api/generate")
                 .body(jsonObject.toString())
                 .timeout(3000000)                // 3000秒超时
                 .execute()
@@ -74,8 +64,8 @@ public class AiManager {
         return new JSONObject(response).getStr("response");
     }
 
-    public Flux<String> askDeepSeekSteam(String userMessage,String sysMessage,String model) {
-        WebClient client = WebClient.create(API_URL);
+    public Flux<String> askDeepSeekSteam(String userMessage,String sysMessage) {
+        WebClient client = WebClient.create(apiUrl);
         List<AiMessage> messages = List.of(
                 new AiMessage("system", sysMessage),
                 new AiMessage("user", userMessage)
@@ -88,7 +78,7 @@ public class AiManager {
                 .uri("/api/generate")
                 .contentType(MediaType.APPLICATION_JSON) // 必须设置JSON类型
                 .bodyValue(Map.of(
-                        "model", model,
+                        "model", modelName,
                         "prompt", jsonObject.toString(),
                         "stream", true,
                         "temperature", 0.7
@@ -99,7 +89,7 @@ public class AiManager {
                 .map(data -> new JSONObject(data).get("response").toString());
     }
 
-    public Flowable<String> askDeepSeekSteamRx(String userMessage, String sysMessage, String model, boolean isThink) {
+    public Flowable<String> askDeepSeekSteamRx(String userMessage, String sysMessage, boolean isThink) {
         // 1. 构建请求体（与原逻辑一致）
         List<AiMessage> messages = List.of(
                 new AiMessage("system", sysMessage),
@@ -109,7 +99,7 @@ public class AiManager {
         jsonObject.put("messages", messages);
 
         Map<String, Object> requestBody = Map.of(
-                "model", model,
+                "model", modelName,
                 "prompt", jsonObject.toString(),
                 "stream", true,
                 "temperature", 0.7
@@ -125,7 +115,7 @@ public class AiManager {
 
         // 3. 构建请求
         Request request = new Request.Builder()
-                .url(API_URL + "/api/generate")
+                .url(apiUrl + "/api/generate")
                 .post(RequestBody.create(
                         new JSONObject(requestBody).toString().getBytes()
                 ))

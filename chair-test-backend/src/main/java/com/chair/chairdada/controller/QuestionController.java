@@ -316,7 +316,7 @@ public class QuestionController {
         // 封装 Prompt
         String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
         // AI 生成
-        String result = aiManager.askDeepSeek(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b);
+        String result = aiManager.askDeepSeek(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE);
         log.info("ai生成题目：{}", result);
         // 截取需要的 JSON 信息
         int start = result.indexOf("[");
@@ -343,7 +343,7 @@ public class QuestionController {
         // 建立 SSE 连接对象，0 表示永不超时
         SseEmitter sseEmitter = new SseEmitter(0L);
         // AI 生成，SSE 流式返回
-        Flowable<String> stringFlowable = aiManager.askDeepSeekSteamRx(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b, true);
+        Flowable<String> stringFlowable = aiManager.askDeepSeekSteamRx(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, true);
         // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
         AtomicInteger counter = new AtomicInteger(0);
         // 拼接完整题目
@@ -462,11 +462,11 @@ public class QuestionController {
 
     @GetMapping("/ai_generate/bd/SSE")
     public Flowable<String> askQuestionSSE(String question, HttpServletRequest request) {
-        return deepSeekUtil.askDeepSeekSteamRx(question, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b, true);
+        return deepSeekUtil.askDeepSeekSteamRx(question, GENERATE_QUESTION_SYSTEM_MESSAGE, true);
     }
 
     @GetMapping("/ai_generate/bd")
     public String askQuestion(String question, HttpServletRequest request) {
-        return deepSeekUtil.askDeepSeek(question, GENERATE_QUESTION_SYSTEM_MESSAGE, AiManager.DeepSeekR1_7b);
+        return deepSeekUtil.askDeepSeek(question, GENERATE_QUESTION_SYSTEM_MESSAGE);
     }
 }

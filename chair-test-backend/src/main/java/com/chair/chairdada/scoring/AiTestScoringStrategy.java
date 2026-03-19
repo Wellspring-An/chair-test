@@ -102,7 +102,7 @@ public class AiTestScoringStrategy implements ScoringStrategy {
             // 封装 Prompt
             String userMessage = getAiTestScoringUserMessage(app, questionContent, choices);
             // AI 生成
-            String result = aiManager.askDeepSeek(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage, AiManager.DeepSeekR1_7b);
+            String result = aiManager.askDeepSeek(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage);
 
             // 截取需要的 JSON 信息
             int start = result.indexOf("{");

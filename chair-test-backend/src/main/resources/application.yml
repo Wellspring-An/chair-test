@@ -1,10 +1,19 @@
 # 公共配置文件
 spring:
   application:
-    name: springboot-init
-  # 默认 dev 环境
-  profiles:
-    active: dev
+    name: chairTestSingle
+
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8848
+        namespace: dev
+        group: dev
+        file-extension: yaml
+
+  config:
+    import:
+      - nacos:xxx.yml
   # 支持 swagger3
   mvc:
     pathmatch:
@@ -15,21 +24,7 @@ spring:
     # store-type: redis
     # 30 天过期
     timeout: 2592000
-  # 数据库配置
-  # todo 需替换配置
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/chairdada
-    username: root
-    password: 123456
-  # Redis 配置
-  # todo 需替换配置，然后取消注释
-  redis:
-    database: 1
-    host: 127.0.0.1
-    port: 6379
-    timeout: 5000
-    password: 123456
+
   # Elasticsearch 配置
   # todo 需替换配置，然后取消注释
 #  elasticsearch:
@@ -41,36 +36,6 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
-
-  # 分片规则配置 (分表)
-  shardingsphere:
-    datasource:
-      names: chairdada
-      chairdada:
-        type: com.zaxxer.hikari.HikariDataSource
-        driver-class-name: com.mysql.cj.jdbc.Driver
-        jdbc-url: jdbc:mysql://localhost:3306/chairdada?allowPublicKeyRetrieval=true&useSSL=false
-        username: root
-        password: 123456
-    rules:
-      sharding:
-        # 分片算法配置
-        shardingAlgorithms:
-          # 自定义分片规则名
-          answer-table-inline:
-            ## inline 类型是简单的配置文件里面就能写的类型，其他还要自定义类
-            type: INLINE
-            props:
-              algorithm-expression: user_answer_${appId % 2}
-        tables:
-          user_answer:
-            actualDataNodes: chairdada.user_answer_${0..1}
-            # 分表策略
-            table-strategy:
-              standard:
-                sharding-column: appId
-                sharding-algorithm-name: answer-table-inline
-
 
 server:
   address: 0.0.0.0
