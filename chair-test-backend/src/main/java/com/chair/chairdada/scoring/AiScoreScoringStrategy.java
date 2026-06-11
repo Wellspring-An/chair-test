@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.chair.chairdada.bigmodel.AiManager;
+import com.chair.chairdada.bigmodel.AiChatManager;
 import com.chair.chairdada.common.ErrorCode;
 import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.model.dto.question.QuestionAnswerDTO;
@@ -22,7 +22,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,7 @@ public class AiScoreScoringStrategy implements ScoringStrategy {
     private QuestionService questionService;
 
     @Resource
-    private AiManager aiManager;
+    private AiChatManager aiManager;
 
     @Resource
     private RedissonClient redissonClient;
@@ -110,7 +110,7 @@ public class AiScoreScoringStrategy implements ScoringStrategy {
             // 封装 Prompt
             String userMessage = getAiTestScoringUserMessage(app, questionContent, choices);
             // AI 生成
-            String result = aiManager.askDeepSeek(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage);
+            String result = aiManager.AiChat(AI_TEST_SCORING_SYSTEM_MESSAGE, userMessage);
 
             // 截取需要的 JSON 信息
             int start = result.indexOf("{");

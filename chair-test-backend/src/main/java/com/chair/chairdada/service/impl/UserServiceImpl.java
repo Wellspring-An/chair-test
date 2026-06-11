@@ -23,11 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+//import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -119,46 +119,46 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return ResultUtils.login_success(loginUserVO, token);
     }
 
-    @Override
-    public BaseLoginResponse<LoginUserVO> userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
-        String unionId = wxOAuth2UserInfo.getUnionId();
-        String mpOpenId = wxOAuth2UserInfo.getOpenid();
-        // 单机锁
-        synchronized (unionId.intern()) {
-            // 查询用户是否已存在
-            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("unionId", unionId);
-            User user = this.getOne(queryWrapper);
-            // 被封号，禁止登录
-            if (user != null && UserRoleEnum.BAN.getValue().equals(user.getUserRole())) {
-                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "该用户已被封，禁止登录");
-            }
-            // 用户不存在则创建
-            if (user == null) {
-                user = new User();
-                user.setUnionId(unionId);
-                user.setMpOpenId(mpOpenId);
-                // 暂时设置为这些值
-                user.setUserAccount(mpOpenId);
-                user.setUserPassword(unionId);
-
-                user.setUserAvatar(wxOAuth2UserInfo.getHeadImgUrl());
-                user.setUserName(wxOAuth2UserInfo.getNickname());
-                boolean result = this.save(user);
-                user.setUserRole("user");
-                if (!result) {
-                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
-                }
-            }
-            String token = TokenConfig.setToken(String.valueOf(user.getId()));
-            // 记录用户的登录态
-            redisTemplate.opsForValue().set(token, user, 1, TimeUnit.DAYS);
-            request.getSession().setAttribute(tokenConfig.getTokenName(), token);
-            request.getSession().setAttribute(USER_LOGIN_STATE, token);
-            LoginUserVO loginUserVO = getLoginUserVO(user);
-            return ResultUtils.login_success(loginUserVO, token);
-        }
-    }
+//    @Override
+//    public BaseLoginResponse<LoginUserVO> userLoginByMpOpen(WxOAuth2UserInfo wxOAuth2UserInfo, HttpServletRequest request) {
+//        String unionId = wxOAuth2UserInfo.getUnionId();
+//        String mpOpenId = wxOAuth2UserInfo.getOpenid();
+//        // 单机锁
+//        synchronized (unionId.intern()) {
+//            // 查询用户是否已存在
+//            QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//            queryWrapper.eq("unionId", unionId);
+//            User user = this.getOne(queryWrapper);
+//            // 被封号，禁止登录
+//            if (user != null && UserRoleEnum.BAN.getValue().equals(user.getUserRole())) {
+//                throw new BusinessException(ErrorCode.FORBIDDEN_ERROR, "该用户已被封，禁止登录");
+//            }
+//            // 用户不存在则创建
+//            if (user == null) {
+//                user = new User();
+//                user.setUnionId(unionId);
+//                user.setMpOpenId(mpOpenId);
+//                // 暂时设置为这些值
+//                user.setUserAccount(mpOpenId);
+//                user.setUserPassword(unionId);
+//
+//                user.setUserAvatar(wxOAuth2UserInfo.getHeadImgUrl());
+//                user.setUserName(wxOAuth2UserInfo.getNickname());
+//                boolean result = this.save(user);
+//                user.setUserRole("user");
+//                if (!result) {
+//                    throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败");
+//                }
+//            }
+//            String token = TokenConfig.setToken(String.valueOf(user.getId()));
+//            // 记录用户的登录态
+//            redisTemplate.opsForValue().set(token, user, 1, TimeUnit.DAYS);
+//            request.getSession().setAttribute(tokenConfig.getTokenName(), token);
+//            request.getSession().setAttribute(USER_LOGIN_STATE, token);
+//            LoginUserVO loginUserVO = getLoginUserVO(user);
+//            return ResultUtils.login_success(loginUserVO, token);
+//        }
+//    }
 
     /**
      * 获取当前登录用户

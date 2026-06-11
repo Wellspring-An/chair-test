@@ -13,7 +13,7 @@ import com.chair.chairdada.model.vo.QuestionVO;
 import com.chair.chairdada.service.QuestionService;
 import com.chair.chairdada.service.ScoringResultService;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

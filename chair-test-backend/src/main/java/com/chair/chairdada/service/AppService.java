@@ -7,7 +7,7 @@ import com.chair.chairdada.model.dto.app.AppQueryRequest;
 import com.chair.chairdada.model.entity.App;
 import com.chair.chairdada.model.vo.AppVO;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 应用服务

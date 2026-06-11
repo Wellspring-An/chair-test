@@ -7,7 +7,7 @@ import com.chair.chairdada.model.dto.scoringResult.ScoringResultQueryRequest;
 import com.chair.chairdada.model.entity.ScoringResult;
 import com.chair.chairdada.model.vo.ScoringResultVO;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 评分结果服务

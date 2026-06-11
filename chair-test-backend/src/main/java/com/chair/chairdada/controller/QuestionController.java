@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chair.chairdada.annotation.AuthCheck;
-import com.chair.chairdada.bigmodel.AiManager;
+import com.chair.chairdada.bigmodel.AiChatManager;
 import com.chair.chairdada.common.BaseResponse;
 import com.chair.chairdada.common.DeleteRequest;
 import com.chair.chairdada.common.ErrorCode;
@@ -21,16 +21,18 @@ import com.chair.chairdada.model.vo.QuestionVO;
 import com.chair.chairdada.service.AppService;
 import com.chair.chairdada.service.QuestionService;
 import com.chair.chairdada.service.UserService;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Scheduler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import reactor.core.scheduler.Scheduler;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,7 +55,7 @@ public class QuestionController {
     private AppService appService;
 
     @Resource
-    private AiManager aiManager;
+    private AiChatManager aiManager;
 
     @Resource
     private Scheduler vipScheduler;
@@ -62,7 +64,7 @@ public class QuestionController {
     private Scheduler userScheduler;
 
     @Resource
-    AiManager deepSeekUtil;
+    AiChatManager deepSeekUtil;
 
     // region 增删改查
 
@@ -316,7 +318,7 @@ public class QuestionController {
         // 封装 Prompt
         String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
         // AI 生成
-        String result = aiManager.askDeepSeek(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE);
+        String result = aiManager.AiChat(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE);
         log.info("ai生成题目：{}", result);
         // 截取需要的 JSON 信息
         int start = result.indexOf("[");
@@ -343,7 +345,7 @@ public class QuestionController {
         // 建立 SSE 连接对象，0 表示永不超时
         SseEmitter sseEmitter = new SseEmitter(0L);
         // AI 生成，SSE 流式返回
-        Flowable<String> stringFlowable = aiManager.askDeepSeekSteamRx(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE, true);
+        Flux<ChatResponse> stringFlowable = aiManager.AiChatStream(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE);
         // 左括号计数器，除了默认值外，当回归为 0 时，表示左括号等于右括号，可以截取
         AtomicInteger counter = new AtomicInteger(0);
         // 拼接完整题目
@@ -355,15 +357,15 @@ public class QuestionController {
             scheduler = vipScheduler;
         }
         stringFlowable
-                .observeOn(scheduler)
-                .map(message -> message.replaceAll("\\s", ""))
+                .subscribeOn(scheduler)
+                .mapNotNull(message -> message.getResult().getOutput().getText())
                 .filter(StrUtil::isNotBlank)
                 .flatMap(message -> {
                     List<Character> characterList = new ArrayList<>();
                     for (char c : message.toCharArray()) {
                         characterList.add(c);
                     }
-                    return Flowable.fromIterable(characterList);
+                    return Flux.fromIterable(characterList);
                 })
                 .doOnNext(c -> {
                     // 如果是 '{'，计数器 + 1
@@ -377,7 +379,11 @@ public class QuestionController {
                         counter.addAndGet(-1);
                         if (counter.get() == 0) {
                             // 可以拼接题目，并且通过 SSE 返回给前端
-                            sseEmitter.send(JSONUtil.toJsonStr(stringBuilder.toString()));
+                            try {
+                                sseEmitter.send(JSONUtil.toJsonStr(stringBuilder.toString()));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                             // 重置，准备拼接下一道题
                             stringBuilder.setLength(0);
                         }
@@ -461,12 +467,12 @@ public class QuestionController {
     // endregion
 
     @GetMapping("/ai_generate/bd/SSE")
-    public Flowable<String> askQuestionSSE(String question, HttpServletRequest request) {
-        return deepSeekUtil.askDeepSeekSteamRx(question, GENERATE_QUESTION_SYSTEM_MESSAGE, true);
+    public Flux<ChatResponse> askQuestionSSE(String question) {
+        return deepSeekUtil.AiChatStream(question, GENERATE_QUESTION_SYSTEM_MESSAGE);
     }
 
     @GetMapping("/ai_generate/bd")
     public String askQuestion(String question, HttpServletRequest request) {
-        return deepSeekUtil.askDeepSeek(question, GENERATE_QUESTION_SYSTEM_MESSAGE);
+        return deepSeekUtil.AiChat(question, GENERATE_QUESTION_SYSTEM_MESSAGE);
     }
 }

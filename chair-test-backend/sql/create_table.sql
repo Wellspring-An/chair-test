@@ -1,10 +1,10 @@
 # 数据库初始化
 
 -- 创建库
-create database if not exists chairdada;
+create database if not exists chairDB;
 
 -- 切换库
-use chairdada;
+use chairDB;
 
 -- 用户表
 create table if not exists user

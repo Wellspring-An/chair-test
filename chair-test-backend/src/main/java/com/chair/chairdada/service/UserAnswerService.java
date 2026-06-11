@@ -7,7 +7,7 @@ import com.chair.chairdada.model.dto.userAnswer.UserAnswerQueryRequest;
 import com.chair.chairdada.model.entity.UserAnswer;
 import com.chair.chairdada.model.vo.UserAnswerVO;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * 用户答案服务

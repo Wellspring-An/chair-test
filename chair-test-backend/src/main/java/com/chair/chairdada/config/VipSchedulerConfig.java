@@ -1,10 +1,10 @@
 package com.chair.chairdada.config;
 
-import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import reactor.core.scheduler.Scheduler;
 import lombok.Data;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import reactor.core.scheduler.Schedulers;
 
 import javax.validation.constraints.NotNull;
 import java.util.concurrent.Executors;
@@ -30,7 +30,7 @@ public class VipSchedulerConfig {
             }
         };
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(10, threadFactory);
-        return Schedulers.from(scheduledExecutorService);
+        return Schedulers.fromExecutorService(scheduledExecutorService);
     }
 
     @Bean
@@ -47,6 +47,6 @@ public class VipSchedulerConfig {
             }
         };
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2, threadFactory);
-        return Schedulers.from(scheduledExecutorService);
+        return Schedulers.fromExecutorService(scheduledExecutorService);
     }
 }

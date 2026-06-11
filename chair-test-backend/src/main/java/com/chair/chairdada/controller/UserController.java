@@ -3,7 +3,6 @@ package com.chair.chairdada.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chair.chairdada.annotation.AuthCheck;
 import com.chair.chairdada.common.*;
-import com.chair.chairdada.config.WxOpenConfig;
 import com.chair.chairdada.constant.UserConstant;
 import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.exception.ThrowUtils;
@@ -14,15 +13,12 @@ import com.chair.chairdada.model.vo.UserVO;
 import com.chair.chairdada.service.UserService;
 
 import java.util.List;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.google.gson.Gson;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
-import me.chanjar.weixin.common.bean.oauth2.WxOAuth2AccessToken;
-import me.chanjar.weixin.mp.api.WxMpService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.DigestUtils;
@@ -48,8 +44,8 @@ public class UserController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private WxOpenConfig wxOpenConfig;
+//    @Resource
+//    private WxOpenConfig wxOpenConfig;
 
     // region 登录相关
 
@@ -96,45 +92,45 @@ public class UserController {
 
     /**
      * 用户登录（微信开放平台）
-     */
-    @GetMapping("/login/wx_open")
-    public BaseLoginResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
-                                                            @RequestParam("code") String code) {
-        WxOAuth2AccessToken accessToken;
-        try {
-            WxMpService wxService = wxOpenConfig.getWxMpService();
-            accessToken = wxService.getOAuth2Service().getAccessToken(code);
-            WxOAuth2UserInfo userInfo = wxService.getOAuth2Service().getUserInfo(accessToken, code);
-            String unionId = userInfo.getUnionId();
-            String mpOpenId = userInfo.getOpenid();
-            if (StringUtils.isAnyBlank(unionId, mpOpenId)) {
-                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-            }
-            return userService.userLoginByMpOpen(userInfo, request);
-        } catch (Exception e) {
-            log.error("userLoginByWxOpen error", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
-        }
-    }
+//     */
+//    @GetMapping("/login/wx_open")
+//    public BaseLoginResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
+//                                                            @RequestParam("code") String code) {
+//        WxOAuth2AccessToken accessToken;
+//        try {
+//            WxMpService wxService = wxOpenConfig.getWxMpService();
+//            accessToken = wxService.getOAuth2Service().getAccessToken(code);
+//            WxOAuth2UserInfo userInfo = wxService.getOAuth2Service().getUserInfo(accessToken, code);
+//            String unionId = userInfo.getUnionId();
+//            String mpOpenId = userInfo.getOpenid();
+//            if (StringUtils.isAnyBlank(unionId, mpOpenId)) {
+//                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
+//            }
+//            return userService.userLoginByMpOpen(userInfo, request);
+//        } catch (Exception e) {
+//            log.error("userLoginByWxOpen error", e);
+//            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "登录失败，系统错误");
+//        }
+//    }
 
     /**
      * 用户登录（微信开放平台）
      */
-    @GetMapping("/login/wx_mini_open")
-    public BaseLoginResponse<LoginUserVO> userLoginByWxMiniOpen(HttpServletRequest request, HttpServletResponse response,
-                                                                         @RequestParam("code") String code) {
-        String url = "https://api.weixin.qq.com/sns/jscode2session" +
-                "?appid=" + wxOpenConfig.getAppId() +
-                "&secret=" + wxOpenConfig.getAppSecret() +
-                "&js_code=" + code +
-                "&grant_type=authorization_code";
-
-        RestTemplate restTemplate = new RestTemplate();
-        Gson gson = new Gson();
-        String userInfo = restTemplate.getForObject(url, String.class);
-        WxUserInfo wxUserInfo = gson.fromJson(userInfo, WxUserInfo.class);
-        return userService.userLoginByMpOpen(wxUserInfo, request);
-    }
+//    @GetMapping("/login/wx_mini_open")
+//    public BaseLoginResponse<LoginUserVO> userLoginByWxMiniOpen(HttpServletRequest request, HttpServletResponse response,
+//                                                                         @RequestParam("code") String code) {
+//        String url = "https://api.weixin.qq.com/sns/jscode2session" +
+//                "?appid=" + wxOpenConfig.getAppId() +
+//                "&secret=" + wxOpenConfig.getAppSecret() +
+//                "&js_code=" + code +
+//                "&grant_type=authorization_code";
+//
+//        RestTemplate restTemplate = new RestTemplate();
+//        Gson gson = new Gson();
+//        String userInfo = restTemplate.getForObject(url, String.class);
+//        WxUserInfo wxUserInfo = gson.fromJson(userInfo, WxUserInfo.class);
+//        return userService.userLoginByMpOpen(wxUserInfo, request);
+//    }
 
     /**
      * 用户注销

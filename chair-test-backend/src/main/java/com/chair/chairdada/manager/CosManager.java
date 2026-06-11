@@ -5,7 +5,7 @@ import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.chair.chairdada.config.CosClientConfig;
 import java.io.File;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 /**

@@ -29,8 +29,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
 
@@ -100,7 +100,7 @@ public class UserAnswerController {
         try {
             UserAnswer userAnswerWithResult = scoringStrategyExecutor.doScore(choices, app);
             userAnswerWithResult.setId(newUserAnswerId);
-            userAnswerWithResult.setAppId(null);
+            userAnswerWithResult.setAppId(appId);
             userAnswerService.updateById(userAnswerWithResult);
         } catch (Exception e) {
             log.error("评分错误：{}", e.toString());

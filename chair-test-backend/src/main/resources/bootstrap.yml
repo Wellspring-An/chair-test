@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: chairTestSingle
+  cloud:
+    nacos:
+      config:
+        server-addr: 47.77.185.125:8848
+        namespace: prod
+        group: prod
+      discovery:
+        server-addr: 47.77.185.125:8848
+        namespace: prod
+        group: prod
+  config:
+    import:
+      - optional:nacos:chairTestSingle.yml
