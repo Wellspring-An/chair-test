@@ -12,12 +12,14 @@ import AdminUserAnswerPage from "@/views/admin/AdminUserAnswerPage.vue";
 import HomePage from "@/views/HomePage.vue";
 import AppDetailPage from "@/views/app/AppDetailPage.vue";
 import AddAppPage from "@/views/add/AddAppPage.vue";
+import AiChat from "@/views/ai/AIChat.vue";
 import AddQuestionPage from "@/views/add/AddQuestionPage.vue";
 import AddScoringResultPage from "@/views/add/AddScoringResultPage.vue";
 import MyAnswerPage from "@/views/answer/MyAnswerPage.vue";
 import DoAnswerPage from "@/views/answer/DoAnswerPage.vue";
 import AnswerResultPage from "@/views/answer/AnswerResultPage.vue";
 import AppStatisticPage from "@/views/statistic/AppStatisticPage.vue";
+import AIBot from "@/views/ai/AIBot.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -29,6 +31,16 @@ export const routes: Array<RouteRecordRaw> = [
     path: "/add/app",
     name: "创建应用",
     component: AddAppPage,
+  },
+  {
+    path: "/ai/chat",
+    name: "聊天",
+    component: AiChat,
+  },
+  {
+    path: "/ai/bot",
+    name: "AI机器人",
+    component: AIBot,
   },
   {
     path: "/add/app/:id",

@@ -1,6 +1,7 @@
-// @ts-ignore
+// @ts-ignore;
 /* eslint-disable */
 import request from "@/request";
+import fetchRequest from "@/fetchRequest";
 
 /** addApp POST /api/app/add */
 export async function addAppUsingPost(
@@ -133,6 +134,71 @@ export async function updateAppUsingPost(
       "Content-Type": "application/json",
     },
     data: body,
+    ...(options || {}),
+  });
+}
+
+
+/** aiChat POST /api/Ai/test */
+export async function aiChat(
+  body: API.AiRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>("/api/Ai/test", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** aiChat POST /api/Ai/test */
+export async function aiBot(
+  body: API.AiBotRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>("/api/Ai/testAddApp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: body,
+    ...(options || {}),
+  });
+}
+
+/** aiChatStream POST /api/Ai/testStream（返回原始 Response，用于流式读取） */
+export async function aiChatStream(
+  body: API.AiRequest,
+  options?: { [key: string]: any }
+) {
+  return fetchRequest("/api/Ai/testStream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "text/event-stream",
+      "Cache-Control": "no-cache",
+    },
+    body: new URLSearchParams(body as Record<string, string>),
+    ...(options || {}),
+  });
+}
+
+/** aiChatStream POST /api/Ai/testStream（返回原始 Response，用于流式读取） */
+export async function aiBotStream(
+  body: API.AiBotRequest,
+  options?: { [key: string]: any }
+) {
+  return fetchRequest("/api/Ai/testAddAppStream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "text/event-stream",
+      "Cache-Control": "no-cache",
+    },
+    body: new URLSearchParams(body as Record<string, string>),
     ...(options || {}),
   });
 }

@@ -100,6 +100,15 @@ declare namespace API {
     updateTime?: string;
   };
 
+  type AiRequest = {
+    userMessage?: string;
+    systemMessage?: string;
+  };
+
+  type AiBotRequest = {
+    userMessage?: string;
+  };
+
   type AppVO = {
     appDesc?: string;
     appIcon?: string;
