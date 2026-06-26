@@ -63,10 +63,12 @@ public class CustomScoreScoringStrategy implements ScoringStrategy {
             totalScore += score;
         }
 
+        int score = totalScore / questionContent.size() * 10;
+
         // 3. 遍历得分结果，找到第一个用户分数大于得分范围的结果，作为最终结果
         ScoringResult maxScoringResult = scoringResultList.get(0);
         for (ScoringResult scoringResult : scoringResultList) {
-            if (totalScore >= scoringResult.getResultScoreRange()) {
+            if (score >= scoringResult.getResultScoreRange()) {
                 maxScoringResult = scoringResult;
                 break;
             }
@@ -82,7 +84,7 @@ public class CustomScoreScoringStrategy implements ScoringStrategy {
         userAnswer.setResultName(maxScoringResult.getResultName());
         userAnswer.setResultDesc(maxScoringResult.getResultDesc());
         userAnswer.setResultPicture(maxScoringResult.getResultPicture());
-        userAnswer.setResultScore(totalScore);
+        userAnswer.setResultScore(score);
         return userAnswer;
     }
 }

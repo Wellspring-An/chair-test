@@ -1,19 +1,5 @@
 # 公共配置文件
 spring:
-  application:
-    name: chairTestSingle
-
-  cloud:
-    nacos:
-      config:
-        server-addr: 127.0.0.1:8848
-        namespace: dev
-        group: dev
-        file-extension: yaml
-
-  config:
-    import:
-      - nacos:xxx.yml
   # 支持 swagger3
   mvc:
     pathmatch:
@@ -55,27 +41,7 @@ mybatis-plus:
       logic-delete-field: isDelete # 全局逻辑删除的实体字段名
       logic-delete-value: 1 # 逻辑已删除值（默认为 1）
       logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
-# 微信相关
-wx:
-  # 微信公众平台
-  # todo 需替换配置
-  mp:
-    token: xxx
-    aesKey: xxx
-    appId: wx9a14dc66b49b6ad2
-    secret: 730a5de454eb7a8e8d6f78eaabb93c32
-    config-storage:
-      http-client-type: HttpClient
-      key-prefix: wx
-      redis:
-        host: 127.0.0.1
-        port: 6379
-      type: Memory
-  # 微信开放平台
-  # todo 需替换配置
-  open:
-    appId: wx9a14dc66b49b6ad2
-    appSecret: 730a5de454eb7a8e8d6f78eaabb93c32
+
 # 对象存储
 # todo 需替换配置
 cos:
@@ -98,3 +64,12 @@ knife4j:
 
 chair:
   token-name: chair-token
+
+logging:
+  level:
+    org:
+      springframework:
+        ai:
+          chat:
+            client:
+              advisor: DEBUG

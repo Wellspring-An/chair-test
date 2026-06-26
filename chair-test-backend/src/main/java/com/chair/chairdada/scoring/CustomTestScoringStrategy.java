@@ -58,7 +58,7 @@ public class CustomTestScoringStrategy implements ScoringStrategy {
                     // 如果答案和选项的key匹配
                     if (option.getKey().equals(answer)) {
                         // 获取选项的result属性
-                        String result = option.getResult();
+                        String result = option.getValue();
 
                         // 如果result属性不在optionCount中，初始化为0
                         if (!optionCount.containsKey(result)) {

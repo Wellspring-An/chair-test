@@ -2,6 +2,8 @@ package com.chair.chairdada.model.dto.question;
 
 
 import lombok.Data;
+import org.springframework.ai.tool.annotation.ToolParam;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -15,11 +17,13 @@ public class QuestionAddRequest implements Serializable {
     /**
      * 题目内容（json格式）
      */
+    @ToolParam(description = "题目内容（json格式）")
     private List<QuestionContentDTO> questionContent;
 
     /**
      * 应用 id
      */
+    @ToolParam(description = "应用 id")
     private Long appId;
 
     private static final long serialVersionUID = 1L;

@@ -46,6 +46,9 @@ public class AuthInterceptor {
 
         // 获取当前登录用户 token
         String token = request.getHeader(tokenConfig.getTokenName());
+        if (token == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
         // 当前登录用户
         User loginUser = (User) redisTemplate.opsForValue().get(token);
         if (loginUser == null) {
