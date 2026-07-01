@@ -3,13 +3,16 @@ package com.chair.chairdada.controller;
 
 import cn.hutool.core.date.DateTime;
 import com.alibaba.cloud.ai.graph.NodeOutput;
+import com.alibaba.cloud.ai.graph.RunnableConfig;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
+import com.alibaba.cloud.ai.graph.checkpoint.savers.MemorySaver;
 import com.alibaba.cloud.ai.graph.exception.GraphRunnerException;
 import com.alibaba.cloud.ai.graph.streaming.OutputType;
 import com.alibaba.cloud.ai.graph.streaming.StreamingOutput;
+import com.alibaba.fastjson.JSON;
 import com.chair.chairdada.annotation.AuthCheck;
-//import com.chair.chairdada.bigmodel.agent.app.TestTools;
 import com.chair.chairdada.bigmodel.agent.app.TestTools;
+import com.chair.chairdada.bigmodel.agent.hook.MessageTrimmingHook;
 import com.chair.chairdada.common.BaseResponse;
 import com.chair.chairdada.common.ErrorCode;
 import com.chair.chairdada.common.ResultUtils;
@@ -21,10 +24,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.deepseek.DeepSeekChatModel;
@@ -32,6 +35,7 @@ import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,9 +47,10 @@ import reactor.core.publisher.Flux;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -132,6 +137,8 @@ public class AiTestController {
 
         TestTools.setRequest(request);
 
+        User userInfo = tokenConfig.getUserInfo();
+
         MethodToolCallbackProvider provider = MethodToolCallbackProvider.builder()
                 .toolObjects(testTools)
                 .build();
@@ -140,20 +147,28 @@ public class AiTestController {
                 .name("test_creator_agent")
                 .model(chatModel)
                 .tools(provider.getToolCallbacks())
+                .hooks(new MessageTrimmingHook())
+                .saver(new MemorySaver())
+                .build();
+
+        RunnableConfig config = RunnableConfig.builder()
+                .threadId(userInfo.getUserAccount() + userInfo.getId())
                 .build();
 
         UserMessage userMessage = new UserMessage(userPrompt);
-        String result = agent.call(userMessage).getText();
+        String result = agent.call(userMessage, config).getText();
         return ResultUtils.success(result);
     }
 
-    @PostMapping("/Ai/testAddAppStream")
+    @PostMapping(value = "/Ai/testAddAppStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @AuthCheck(mustRole = "user")
     public Flux<String> testAddAppStream(@RequestParam("userMessage") String userPrompt) throws GraphRunnerException {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
-
         TestTools.setRequest(request);
+
+        User userInfo = tokenConfig.getUserInfo();
+        String threadId = userInfo.getUserAccount() + "_" + userInfo.getId();
 
         MethodToolCallbackProvider provider = MethodToolCallbackProvider.builder()
                 .toolObjects(testTools)
@@ -163,18 +178,48 @@ public class AiTestController {
                 .name("test_creator_agent")
                 .model(chatModel)
                 .tools(provider.getToolCallbacks())
+                .hooks(new MessageTrimmingHook())
+                .saver(new MemorySaver())
+                .build();
+
+        RunnableConfig config = RunnableConfig.builder()
+                .threadId(threadId)
                 .build();
 
         UserMessage userMessage = new UserMessage(userPrompt);
+        Flux<NodeOutput> nodeOutputFlux = agent.stream(userMessage, config);
 
-        return Flux.create(sink -> {
-            try {
-                String result = agent.call(userMessage).getText();
-                sink.next(result);
-                sink.complete();
-            } catch (GraphRunnerException e) {
-                sink.error(e);
-            }
-        });
+        return nodeOutputFlux
+                .flatMap(nodeOutput -> {
+                    // 改用你原有StreamingOutput判断取文本
+                    List<Message> messages = new ArrayList<>();
+                    if (nodeOutput instanceof StreamingOutput streamingOutput) {
+                        OutputType type = streamingOutput.getOutputType();
+                        if (type == OutputType.AGENT_MODEL_STREAMING) {
+                            messages.add(streamingOutput.message());
+                        }
+                    }
+                    return Flux.fromIterable(messages);
+                })
+                .filter(text -> text != null && !text.getText().isEmpty())
+                // 关键：包装标准SSE+合法JSON对象
+                .map(text -> {
+                    // 构造和你报错结构一致的对象
+                    Map<String, Object> contentMap = Map.of(
+                            "media", List.of(),
+                            "messageType", "ASSISTANT",
+                            "metadata", Map.of(
+                                    "finishReason", "",
+                                    "role", "ASSISTANT",
+                                    "id", UUID.randomUUID().toString(),
+                                    "messageType", "ASSISTANT"
+                            ),
+                            "text", text,
+                            "toolCalls", List.of()
+                    );
+                    Map<String, Object> fullData = Map.of("content", contentMap);
+                    // 标准SSE行，双换行结尾
+                    return "data: " + JSON.toJSONString(fullData) + "\n\n";
+                });
     }
 }
