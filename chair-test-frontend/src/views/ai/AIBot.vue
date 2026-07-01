@@ -12,9 +12,9 @@
         />
       </div>
       <div class="btn-group">
-        <!--        <button class="btn primary" :disabled="loading" @click="sendStream">-->
-        <!--          {{ loading ? "生成中..." : "流式对话" }}-->
-        <!--        </button>-->
+        <button class="btn primary" :disabled="loading" @click="sendStream">
+          {{ loading ? "生成中..." : "流式对话" }}
+        </button>
         <button class="btn" :disabled="loading" @click="sendNormal">
           普通对话
         </button>
@@ -75,15 +75,15 @@ onUnmounted(() => {
 });
 
 // 自动滚动到底部
-const scrollToBottom = () => {
-  if (!outputWrap.value) return;
-  const content = outputWrap.value.querySelector(".output-content");
-  content.scrollTop = content.scrollHeight;
-};
+// const scrollToBottom = () => {
+//   if (!outputWrap.value) return;
+//   const content = outputWrap.value.querySelector(".output-content");
+//   content.scrollTop = content.scrollHeight;
+// };
 
 // 回车快捷发送
 const handleEnterSend = () => {
-  if (!loading.value) sendStream();
+  if (!loading.value) sendNormal();
 };
 
 // 清空输出 & 终止请求
@@ -117,94 +117,109 @@ const sendNormal = async () => {
   }
 };
 
-// 从 SSE 报文中提取文本内容
-const extractTextFromChunk = (data) => {
-  let text = "";
-  // 优先取 result.output 中的 text 和 reasoningContent
-  const output = data?.result?.output;
-  if (output) {
-    if (output.text) text += output.text;
-    if (output.reasoningContent) text += output.reasoningContent;
-  }
-  // 兜底遍历 results 数组
-  if (!text && Array.isArray(data?.results)) {
-    for (const item of data.results) {
-      const out = item?.output;
-      if (out?.text) text += out.text;
-      if (out?.reasoningContent) text += out.reasoningContent;
-    }
-  }
-  return text;
-};
-
 // 流式 POST 对话（axios 不支持浏览器流式读取，必须用原生 fetch）
 const sendStream = async () => {
   if (loading.value) return;
   clearOutput();
   loading.value = true;
   abortController = new AbortController();
+  const signal = abortController.signal;
 
   try {
     const res = await aiBotStream(
-      {
-        userMessage: userMessage.value,
-      },
-      {
-        signal: abortController.signal,
-      }
+      { userMessage: userMessage.value },
+      { signal }
     );
 
     if (!res.ok) {
-      const errorData = await res.json();
-      // errorData 格式: { code: xxx, data: null, message: "今日AI调用次数已达上限" }
-      console.error(errorData.message);
-      alert(errorData.message); // 或用你的 UI 提示方式
+      let errMsg = `请求失败 状态码:${res.status}`;
+      try {
+        const errorData = await res.json();
+        errMsg = errorData.message || errMsg;
+      } catch {
+        const text = await res.text();
+        errMsg = text || errMsg;
+      }
+      alert(errMsg);
+      output.value += `\n\n❌ ${errMsg}`;
+      scrollToBottom();
       return;
     }
 
-    if (!res.ok) throw new Error(`请求异常 ${res.status}`);
     if (!res.body) throw new Error("当前浏览器不支持流式响应");
 
     const reader = res.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    // 用于拼接可能跨 chunk 的不完整 JSON 行
+    const decoder = new TextDecoder("utf-8", { stream: true });
     let buffer = "";
-    let readResult;
 
-    while (!(readResult = await reader.read()).done) {
-      buffer += decoder.decode(readResult.value, { stream: true });
-      const lines = buffer.split(/\r?\n/);
-      // 最后一行可能不完整，留到下次拼接
-      buffer = lines.pop() ?? "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      for (const line of lines) {
+      buffer += decoder.decode(value, { stream: true });
+      // 按标准换行分割所有行
+      const rawLines = buffer.split(/\r?\n/);
+      buffer = rawLines.pop() ?? "";
+
+      for (const line of rawLines) {
         const trimLine = line.trim();
-        if (!trimLine || !trimLine.startsWith("data:")) continue;
+        // 空行、SSE注释行直接跳过
+        if (!trimLine || trimLine.startsWith(":")) continue;
 
-        const jsonStr = trimLine.slice(5);
-        if (!jsonStr) continue;
-
-        try {
-          const data = JSON.parse(jsonStr);
-          const text = extractTextFromChunk(data);
-          if (text) {
-            output.value += text;
-            scrollToBottom();
+        // 1. 提取data内容，彻底清洗前缀、空格
+        if (trimLine.startsWith("data:")) {
+          // 替换所有data: 分割粘连的多条消息（解决一行多个data:）
+          const dataChunks = trimLine
+            .split(/data:\s*/)
+            .filter((item) => !!item.trim());
+          for (const rawJsonStr of dataChunks) {
+            const jsonRaw = rawJsonStr.trim();
+            if (!jsonRaw) continue;
+            try {
+              const chunkData = JSON.parse(jsonRaw);
+              // 提取真实文本
+              const text = chunkData.content?.text?.text ?? "";
+              if (text) {
+                output.value += text;
+                scrollToBottom();
+              }
+            } catch (parseErr) {
+              // 打印完整脏数据，方便调试
+              console.warn(
+                "JSON解析失败，原始字符串：",
+                JSON.stringify(jsonRaw),
+                parseErr
+              );
+              continue;
+            }
           }
-        } catch {
-          // JSON 解析失败，忽略
         }
       }
     }
+    // 清空解码器残留
+    decoder.decode();
   } catch (err) {
-    if (err.name !== "AbortError") {
+    if (err.name === "AbortError") {
+      output.value += "\n\n⚠️ 已手动终止对话";
+    } else {
+      console.error("流式请求异常", err);
       output.value += `\n\n❌ 流式请求出错: ${err.message}`;
-      scrollToBottom();
     }
+    scrollToBottom();
   } finally {
     loading.value = false;
     abortController = null;
   }
+};
+
+// 防抖滚动
+let scrollTimer = null;
+const scrollToBottom = () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => {
+    const box = document.getElementById("output-box");
+    if (box) box.scrollTop = box.scrollHeight;
+  }, 20);
 };
 </script>
 
@@ -333,9 +348,11 @@ h1 {
 .output-content::-webkit-scrollbar {
   width: 6px;
 }
+
 .output-content::-webkit-scrollbar-track {
   background: #2a2a3a;
 }
+
 .output-content::-webkit-scrollbar-thumb {
   background: #4f8cff;
   border-radius: 3px;
@@ -347,6 +364,7 @@ h1 {
   color: #4f8cff;
   font-weight: bold;
 }
+
 .end-cursor {
   position: absolute;
   left: 20px;
@@ -366,16 +384,20 @@ h1 {
   font-weight: 600;
   color: #f0f0f0;
 }
+
 .markdown-body :deep(p) {
   margin: 0.8em 0;
 }
+
 .markdown-body :deep(ul, ol) {
   padding-left: 1.8em;
   margin: 0.8em 0;
 }
+
 .markdown-body :deep(li) {
   margin: 0.3em 0;
 }
+
 .markdown-body :deep(blockquote) {
   border-left: 4px solid #4f8cff;
   padding: 0.4em 1em;
@@ -383,6 +405,7 @@ h1 {
   color: #b0b0b0;
   background: #252535;
 }
+
 /* 行内代码 */
 .markdown-body :deep(code) {
   background: #2a2a3a;
@@ -390,32 +413,39 @@ h1 {
   border-radius: 4px;
   font-family: "JetBrains Mono", Consolas, monospace;
 }
+
 /* 代码块 */
 .markdown-body :deep(pre) {
   margin: 1em 0;
   border-radius: 8px;
   overflow: hidden;
 }
+
 .markdown-body :deep(pre code) {
   padding: 0;
   background: transparent;
 }
+
 .markdown-body :deep(a) {
   color: #4f8cff;
   text-decoration: none;
 }
+
 .markdown-body :deep(a:hover) {
   text-decoration: underline;
 }
+
 .markdown-body :deep(table) {
   width: 100%;
   border-collapse: collapse;
   margin: 1em 0;
 }
+
 .markdown-body :deep(th, td) {
   border: 1px solid #3a3a4a;
   padding: 6px 10px;
 }
+
 .markdown-body :deep(th) {
   background: #2a2a3a;
 }
@@ -425,9 +455,11 @@ h1 {
   .ai-chat-page {
     padding: 16px 12px;
   }
+
   .btn-group {
     gap: 8px;
   }
+
   .btn {
     padding: 8px 16px;
     flex: 1;
