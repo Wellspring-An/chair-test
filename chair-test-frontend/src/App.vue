@@ -21,6 +21,7 @@ const route = useRoute();
  */
 const doInit = () => {
   console.log("hello 欢迎来到我的项目");
+  console.log(import.meta.env.VITE_API_BASE_URL);
 };
 
 onMounted(() => {

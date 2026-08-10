@@ -20,6 +20,7 @@ import DoAnswerPage from "@/views/answer/DoAnswerPage.vue";
 import AnswerResultPage from "@/views/answer/AnswerResultPage.vue";
 import AppStatisticPage from "@/views/statistic/AppStatisticPage.vue";
 import AIBot from "@/views/ai/AIBot.vue";
+import WebChat from "@/views/chat/WebChat.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -31,6 +32,11 @@ export const routes: Array<RouteRecordRaw> = [
     path: "/add/app",
     name: "创建应用",
     component: AddAppPage,
+  },
+  {
+    path: "/web/chat",
+    name: "好友聊天",
+    component: WebChat,
   },
   {
     path: "/ai/chat",
