@@ -21,6 +21,7 @@ import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.model.entity.User;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Data;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -34,6 +35,8 @@ import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,7 +56,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@ConfigurationProperties("test")
 @RestController
+@Data
 public class AiTestController {
 
     @Autowired
@@ -72,6 +77,13 @@ public class AiTestController {
 
     @Autowired
     private TokenConfig tokenConfig;
+
+    private String config;
+
+    @PostMapping("/test/config")
+    public String testConfig() {
+        return config;
+    }
 
     @PostMapping("/Ai/test")
     @AuthCheck(mustRole = "user")
