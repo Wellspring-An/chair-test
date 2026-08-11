@@ -5,6 +5,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.Getter;
+import org.joda.time.LocalTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,7 @@ public class TokenConfig {
     public static final String SALT = "chair";
 
     public static String setToken(String param) {
-        return DigestUtils.md5DigestAsHex((SALT + param).getBytes());
+        return DigestUtils.md5DigestAsHex((SALT + param + new LocalTime()).getBytes());
     }
 
     public User getUserInfo() {
@@ -44,5 +45,24 @@ public class TokenConfig {
             return null;
         }
         return (User) redisTemplate.opsForValue().get(token);
+    }
+
+    public User getUserInfo(String token) {
+        if (token == null) {
+            return null;
+        }
+        return (User) redisTemplate.opsForValue().get(token);
+    }
+
+    public Boolean removeUserInfo() {
+        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
+        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
+
+        String token = request.getHeader(tokenName);
+
+        if (token == null) {
+            return false;
+        }
+        return redisTemplate.delete(token);
     }
 }

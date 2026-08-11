@@ -13,7 +13,7 @@ class ChatController {
   private onCloseHandlers: Set<() => void> = new Set();
 
   constructor() {
-    this.url = `/api/chat`;
+    this.url = `/api/web/chat`;
   }
 
   // ✅新增：对外暴露实时读取连接状态
