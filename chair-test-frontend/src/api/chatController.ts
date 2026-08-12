@@ -32,7 +32,7 @@ class ChatController {
     this.manuallyClosed = false;
 
     try {
-      this.socket = new WebSocket(this.url);
+      this.socket = new WebSocket(this.url+`?chair-token=${localStorage.getItem('chair-token')}`);
 
       this.socket.onopen = () => {
         console.log("WebSocket 连接成功");

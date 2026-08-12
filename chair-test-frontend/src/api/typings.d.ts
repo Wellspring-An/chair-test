@@ -899,4 +899,20 @@ declare namespace API {
     userProfile?: string;
     userRole?: string;
   };
+
+  type SendWebSocketMessage = {
+    message?: string;
+    type: string;
+    sender: string;
+    receiver?: string;
+    time?: string;
+  }
+
+  type receiveWebSocketMessage = {
+    message?: string;
+    type: string;
+    sender: string;
+    receiver?: string;
+    time?: string;
+  }
 }

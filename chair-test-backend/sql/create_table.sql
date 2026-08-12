@@ -136,3 +136,20 @@ create table if not exists user_answer_1
     index idx_appId (appId),
     index idx_userId (userId)
 ) comment '用户答题记录分表 1' collate = utf8mb4_unicode_ci;
+
+-- 好友表
+CREATE TABLE `user_friend` (
+                               `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+                               `user_id` bigint NOT NULL COMMENT '用户ID',
+                               `friend_id` bigint NOT NULL COMMENT '好友ID',
+                               `remark` varchar(64) DEFAULT '' COMMENT '好友备注',
+                               `status` tinyint NOT NULL DEFAULT '0' COMMENT '状态 0待同意 1已成为好友 2拒绝 3已删除 4拉黑',
+                               `apply_msg` varchar(128) DEFAULT '' COMMENT '申请好友留言',
+                               `apply_time` datetime DEFAULT NULL COMMENT '申请时间',
+                               `agree_time` datetime DEFAULT NULL COMMENT '同意好友时间',
+                               `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                               PRIMARY KEY (`id`),
+                               UNIQUE KEY `uk_user_friend` (`user_id`,`friend_id`),
+                               KEY `idx_friend_id` (`friend_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='好友关系表';

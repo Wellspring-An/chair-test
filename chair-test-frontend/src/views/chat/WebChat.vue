@@ -2,20 +2,11 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from "vue";
 import { chatController } from "@/api/chatController";
 
-interface Message {
-  id: number;
-  type: "sent" | "received";
-  content: string;
-  time: string;
-}
-
 const inputMessage = ref("");
-const messages = reactive<Message[]>([]);
+const messages = reactive<API.SendWebSocketMessage[]>([]);
 const isConnected = ref(false);
 const chatWindowRef = ref<HTMLElement | null>(null);
 
-let messageIdCounter = 0;
-let streamingMsgId: number | null = null;
 const cleanups: (() => void)[] = [];
 
 const formatTime = (date: Date): string => {
@@ -34,18 +25,17 @@ const scrollToBottom = async () => {
 const sendMessage = () => {
   const content = inputMessage.value.trim();
   if (!content) return;
-
-  const success = chatController.send(content);
+  const sentMsg: API.SendWebSocketMessage = {
+    message: content,
+    type: 'sent',
+    sender: localStorage.getItem("chair-token"),
+    receiver: '',
+    time: formatTime(new Date()),
+  };
+  const success = chatController.send(JSON.stringify(sentMsg));
 
   if (success) {
-    const sentMsg: Message = {
-      id: ++messageIdCounter,
-      type: "sent",
-      content: content,
-      time: formatTime(new Date()),
-    };
     messages.push(sentMsg);
-    streamingMsgId = null;
     inputMessage.value = "";
     scrollToBottom();
   } else {
@@ -82,22 +72,9 @@ onMounted(() => {
 
   cleanups.push(
     chatController.onMessage((raw: string) => {
-      const chunk = raw;
-      if (streamingMsgId === null) {
-        const newMsg: Message = {
-          id: ++messageIdCounter,
-          type: "received",
-          content: chunk,
-          time: formatTime(new Date()),
-        };
-        messages.push(newMsg);
-        streamingMsgId = newMsg.id;
-      } else {
-        const target = messages.find((m) => m.id === streamingMsgId);
-        if (target) {
-          target.content += chunk;
-        }
-      }
+      const parsedData = JSON.parse(raw);
+      const newMsg: API.ReceiveWebSocketMessage = parsedData
+      messages.push(newMsg);
       scrollToBottom();
     })
   );
@@ -142,7 +119,7 @@ onUnmounted(() => {
           :class="['message-row', msg.type === 'sent' ? 'sent' : 'received']"
         >
           <div class="message-bubble">
-            <p class="message-content">{{ msg.content }}</p>
+            <p class="message-content">{{ msg.message }}</p>
             <span class="message-time">{{ msg.time }}</span>
           </div>
         </div>
