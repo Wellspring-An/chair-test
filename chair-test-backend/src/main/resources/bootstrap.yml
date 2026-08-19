@@ -4,11 +4,11 @@ spring:
   cloud:
     nacos:
       config:
-        server-addr: 47.77.185.125:8848
+        server-addr: 00.00.00.00:8848
         namespace: prod
         group: prod
       discovery:
-        server-addr: 47.77.185.125:8848
+        server-addr: 00.00.00.00:8848
         namespace: prod
         group: prod
   config:
