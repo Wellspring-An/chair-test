@@ -5,11 +5,11 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import lombok.Getter;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.LocalTime;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.DigestUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -31,7 +31,7 @@ public class TokenConfig {
     public static final String SALT = "chair";
 
     public static String setToken(String param) {
-        return DigestUtils.md5DigestAsHex((SALT + param + new LocalTime()).getBytes());
+        return DigestUtils.sha256Hex((SALT + param + new LocalTime()).getBytes());
     }
 
     public User getUserInfo() {

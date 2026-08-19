@@ -8,7 +8,9 @@
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="userId" column="user_id" jdbcType="BIGINT"/>
         <result property="friendId" column="friend_id" jdbcType="BIGINT"/>
+        <result property="userAccount" column="userAccount" jdbcType="BIGINT"/>
         <result property="friendAvatar" column="friendAvatar" jdbcType="VARCHAR"/>
+        <result property="userName" column="userName" jdbcType="VARCHAR"/>
         <result property="remark" column="remark" jdbcType="VARCHAR"/>
         <result property="status" column="status" jdbcType="INTEGER"/>
         <result property="applyMsg" column="apply_msg" jdbcType="VARCHAR"/>
@@ -24,14 +26,14 @@
     </sql>
 
     <select id="getFriendList" resultMap="BaseResultMap">
-        select uf.*,u.userAvatar as friendAvatar
+        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
                  left join user u on uf.friend_id = u.id
         where user_id = #{userId} and status = 1
     </select>
 
     <select id="getNotFriendList" resultMap="BaseResultMap">
-        select uf.*,u.userAvatar as friendAvatar
+        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
                  left join user u on uf.friend_id = u.id
         where user_id = #{userId} and status != 1

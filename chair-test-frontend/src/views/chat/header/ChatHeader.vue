@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from "vue";
+import { listUserAllVO } from "@/api/userController.ts";
+import { addUserFriend, selectAll } from "@/api/webChatController.ts";
 import { useRouter } from "vue-router";
-import ChatFooter from "@/views/chat/footer/ChatFooter.vue";
-import ChatMain from "@/views/chat/main/ChatMain.vue";
-import ChatHeader from "@/views/chat/header/ChatHeader.vue";
+import message from "@arco-design/web-vue/es/message";
 
 const router = useRouter();
 
 const show = ref(false);
 const size = ref("medium");
+const users = ref<API.User>([]);
+const myFriends = ref<API.UserFriendVo>([]);
 
 // 点击页面空白关闭
 const handleDocumentClick = (e: MouseEvent) => {
@@ -18,25 +20,100 @@ const handleDocumentClick = (e: MouseEvent) => {
   }
 };
 
+const userFriend = reactive<API.UserFriendVo>({});
+
+const searchUser = async () => {
+  const res = await listUserAllVO();
+  if (res.data.code === 0 && res.data.data) {
+    users.value = res.data.data;
+  }
+};
+
+const addFriend = async () => {
+  const res = await addUserFriend(userFriend);
+  if (res.data.code !== 0) {
+    message.warning(res.data.message);
+  }
+}
+
+const getAllUser = async () => {
+  const res = await selectAll();
+  if (res.data.code === 0) {
+    myFriends.value = res.data.data;
+  }else {
+    message.warning(res.data.message);
+  }
+}
+
 onMounted(() => {
   document.addEventListener("click", handleDocumentClick);
+  getAllUser();
 });
 onUnmounted(() => {
   document.removeEventListener("click", handleDocumentClick);
 });
 
 const visible = ref(false);
+
+const handleClick = () => {
+  visible.value = true;
+};
+const handleOk = () => {
+  visible.value = false;
+  addFriend();
+};
+const handleCancel = () => {
+  visible.value = false;
+};
 </script>
 
 <template>
-  <chat-header />
-  <chat-main />
-  <ChatFooter />
+  <header class="chat-header">
+    <div class="user-info">
+      <div class="details">
+        <div class="anchor-trigger" @click.stop="show = !show">
+          <icon-plus v-if="!show" style="cursor: pointer; font-size:18px;" />
+          <icon-close v-if="show" style="cursor: pointer; font-size:18px;" />
+
+          <!-- 原生锚点菜单 -->
+          <div v-if="show" class="anchor-menu">
+            <div class="menu-item" @click="handleClick">添加好友</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <a-drawer
+    popup-container="#chat-card"
+    :visible="visible"
+    placement="top"
+    @ok="handleOk"
+    @cancel="handleCancel"
+  >
+    <template #title> 添加好友</template>
+    <div
+    >
+      <a-space direction="vertical" size="large">
+        <a-select v-model="userFriend.friendId" :style="{width:'320px'}" :size="size"
+                  @search="searchUser"
+                  placeholder="请输入登录名或名字"
+                  allow-search
+        >
+          <a-option v-for="item of users" :value="item.id">
+            <a-image width="25" height="25" :src="item.userAvatar" />
+            <span style="padding-left: 5px">{{ item.userAccount }} - {{ item.userName }}</span></a-option>
+        </a-select>
+        <a-input v-model="userFriend.applyMsg" placeholder="请输入申请原因" />
+      </a-space>
+    </div
+    >
+  </a-drawer>
 </template>
 
 <style scoped>
 .chat-header {
   padding: 16px;
+  height: 20px;
   background-color: #f7f7f7;
   border-bottom: 1px solid #ececec;
 }
@@ -260,9 +337,5 @@ const visible = ref(false);
   color: var(--color-text-2);
   font-size: 12px;
   line-height: 20px;
-}
-
-.arco-divider-horizontal {
-  border-bottom: 2px solid rgb(142 144 143);
 }
 </style>

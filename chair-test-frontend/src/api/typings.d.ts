@@ -912,6 +912,8 @@ declare namespace API {
     id?: number;
     userId?: number;
     friendId: number;
+    userAccount?: string;
+    userName?: string;
     friendAvatar?: string;
     /** 好友备注 */
     remark?: string;

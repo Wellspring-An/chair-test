@@ -4,7 +4,14 @@
 <template>
   <div class="chat-container">
     <div class="chat-card" id="chat-card">
-      <router-view></router-view>
+      <router-view v-slot="{ Component }">
+        <!-- 外层div：强制占满flex剩余高度，解决白屏/高度坍塌 -->
+        <div class="router-wrap">
+          <transition name="chat-slide">
+            <component :is="Component" />
+          </transition>
+        </div>
+      </router-view>
     </div>
   </div>
 </template>
@@ -31,5 +38,28 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+}
+
+/* 关键：撑满flex剩余空间，防止子组件高度0白屏 */
+.router-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+</style>
+
+<style scoped>
+:deep(.chat-slide-enter-from) {
+  opacity: 0;
+  transform: translateX(30px);
+}
+:deep(.chat-slide-leave-to) {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+:deep(.chat-slide-enter-active),
+:deep(.chat-slide-leave-active) {
+  transition: all 0.28s ease;
 }
 </style>

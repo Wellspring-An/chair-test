@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted, reactive, ref, h } from "vue";
 import { useRouter } from 'vue-router';
 import { selectAddAll } from "@/api/webChatController.ts";
 import message from "@arco-design/web-vue/es/message";
+import ChatFooter from "@/views/chat/footer/ChatFooter.vue";
+import FriendStatusEnum from "@/access/friendStatusEnum.ts";
 
 const myNotFriends = ref<API.UserFriendVo>([]);
 const router = useRouter();
@@ -21,6 +23,16 @@ const getMyNotFriends = async () => {
 onMounted(() => {
   getMyNotFriends()
 })
+
+const agreeFriend = async (record: API.UserFriendVo) => {
+
+}
+const deleteFriend = async (record: API.UserFriendVo) => {
+
+}
+const deFriend = async (record: API.UserFriendVo) => {
+
+}
 </script>
 
 <template>
@@ -32,35 +44,54 @@ onMounted(() => {
   <!-- 消息展示区 -->
   <main class="chat-window">
     <div class="divider-demo">
-      <div class="flex-box" v-for="item in myNotFriends" @click="routerTo(`/web/chat/${item.friendId}`)">
-        <span class="avatar">{{item.friendAvatar}}</span>
-        <div class="content">
-          <a-typography-title :heading="6">{{item.friendId}}</a-typography-title>
-          {{item.applyTime}}
-        </div>
-      </div>
-      <a-divider class="half-divider" />
+      <a-collapse>
+        <a-collapse-item v-for="item in myNotFriends" :key="item.id">
+          <!-- collapse-item原生header插槽，不要挪位置 -->
+          <template #header>
+            <!-- 👉 这里div作为右键触发源 -->
+            <a-dropdown trigger="contextMenu" alignPoint>
+              <template #default>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <img
+                    v-if="item.friendAvatar"
+                    :src="item.friendAvatar"
+                    style="width:32px;height:32px;border-radius:50%;object-fit:cover;"
+                  />
+                  <div v-else style="width:32px;height:32px;border-radius:50%;background:#ccc;"></div>
+                  <span>{{ item.userAccount }}</span>
+                  <span style="margin-left:auto">{{ FriendStatusEnum[item.status] }}</span>
+                </div>
+              </template>
+              <template #content>
+                <a-doption @click="agreeFriend(item)">通过</a-doption>
+                <a-doption @click="deleteFriend(item)">删除</a-doption>
+                <a-doption @click="deFriend(item)">拉黑</a-doption>
+              </template>
+            </a-dropdown>
+          </template>
+
+          <!-- collapse内容区域，不受dropdown影响 -->
+          <a-descriptions :column="6">
+            <a-descriptions-item :span="1">账号：</a-descriptions-item>
+            <a-descriptions-item :span="2">{{ item.userAccount }}</a-descriptions-item>
+            <a-descriptions-item :span="1">昵称：</a-descriptions-item>
+            <a-descriptions-item :span="2">{{ item.userName }}</a-descriptions-item>
+          </a-descriptions>
+          <a-descriptions :column="6">
+            <a-descriptions-item :span="1">申请留言：</a-descriptions-item>
+            <a-descriptions-item :span="5">{{ item.applyMsg }}</a-descriptions-item>
+          </a-descriptions>
+          <a-descriptions :column="6">
+            <a-descriptions-item :span="1">申请时间：</a-descriptions-item>
+            <a-descriptions-item :span="2">{{ item.applyTime }}</a-descriptions-item>
+            <a-descriptions-item :span="1">通过时间：</a-descriptions-item>
+            <a-descriptions-item :span="2">{{ item.agreeTime }}</a-descriptions-item>
+          </a-descriptions>
+        </a-collapse-item>
+      </a-collapse>
     </div>
   </main>
-
-  <!-- 输入区 -->
-  <footer class="chat-input-area">
-    <div class="grid-demo-background">
-      <a-space direction="vertical" :size="16" style="display: block;">
-        <a-row class="grid-demo">
-          <a-col :span="12" @click="routerTo('/web/chat')">
-            <div>首页</div>
-          </a-col>
-          <a-col :span="12" @click="routerTo('/web/chat/friends')">
-            <div>
-              <icon-user-group />
-              好友
-            </div>
-          </a-col>
-        </a-row>
-      </a-space>
-    </div>
-  </footer>
+  <ChatFooter />
 </template>
 
 <style scoped>
@@ -71,50 +102,12 @@ onMounted(() => {
   border-bottom: 1px solid #ececec;
 }
 
-.user-info {
-  float: right;
-}
-
-/* ========== CSS Anchor 核心 ========== */
-.anchor-trigger {
-  position: relative;
-  display: inline-block;
-}
-
-.anchor-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: -16px;
-  min-width: 120px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-.menu-item {
-  padding: 8px 14px;
-  cursor: pointer;
-  font-size: 14px;
-  height: 25px;
-  line-height: 25px;
-  color: #333;
-  border-radius: 8px;
-}
-
-.menu-item:hover {
-  background-color: #f2f3f5;
-}
-
 /* =================================== */
 
 .avatar {
   width: 40px;
   height: 40px;
-  background-color: #007bff;
-  color: white;
   border-radius: 50%;
-  display: flex;
   justify-content: center;
   align-items: center;
   font-weight: bold;
@@ -125,28 +118,6 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   color: #333;
-}
-
-.status {
-  font-size: 12px;
-}
-
-.status.online {
-  color: #28a745;
-}
-
-.status.offline {
-  color: #dc3545;
-}
-
-.close-btn {
-  margin-left: auto;
-  color: #666;
-  font-size: 12px;
-}
-
-.close-btn:hover {
-  color: #ff4d4f;
 }
 
 .chat-window {
@@ -166,27 +137,6 @@ onMounted(() => {
 .chat-window::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
-}
-
-.message-row {
-  display: flex;
-  width: 100%;
-}
-
-.message-row.sent {
-  justify-content: flex-end;
-}
-
-.message-row.received {
-  justify-content: flex-start;
-}
-
-.message-bubble {
-  max-width: 75%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .message-row.sent .message-bubble {
@@ -254,19 +204,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.flex-box .avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin-right: 16px;
-  color: var(--color-text-2);
-  font-size: 16px;
-  background-color: var(--color-fill-3);
-  border-radius: 50%;
 }
 
 .flex-box .content {

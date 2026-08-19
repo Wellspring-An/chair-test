@@ -41,8 +41,16 @@ public class UserFriendDto implements Serializable {
     @TableField("friend_id")
     private Long friendId;
 
+    @Schema(name = "好友账号")
+    @TableField("userAccount")
+    private String userAccount;
+
+    @Schema(name = "好友昵称")
+    @TableField("userName")
+    private String userName;
+
     @Schema(name = "好友头像")
-    @TableField("friend_avatar")
+    @TableField("friendAvatar")
     private String friendAvatar;
 
     @Schema(name = "好友备注")

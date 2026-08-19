@@ -49,6 +49,7 @@ public class UserFriendController {
         UserFriend userFriend = new UserFriend();
         BeanUtil.copyProperties(userFriendVo, userFriend);
         userFriend.setCreateTime(LocalDateTime.now());
+        userFriend.setApplyTime(LocalDateTime.now());
         userFriend.setStatus(0);
         LambdaQueryWrapper<UserFriend> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserFriend::getUserId, userFriend.getUserId());
