@@ -198,3 +198,16 @@ export async function updateMyUserUsingPost(
     ...(options || {}),
   });
 }
+
+/** updateMyUser POST /api/user/update/my */
+export async function listUserAllVO(
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseBoolean_>("/api/user//list/AllVo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    ...(options || {}),
+  });
+}

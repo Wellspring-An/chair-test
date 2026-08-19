@@ -5,7 +5,8 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.chair.chairdada.config.TokenConfig;
 import com.chair.chairdada.model.entity.User;
-import lombok.Data;
+import com.chair.chairdada.model.entity.WebSocketMessage;
+import com.chair.chairdada.model.enums.ChatMessageEnums;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,10 +42,10 @@ public class ChatHandler extends TextWebSocketHandler {
         session.getAttributes().put("userId", userInfo.getId());
         sessions.add(session);
         log.info("有新连接加入！当前在线人数为: {}", sessions.size());
-        ReceiveWebSocketMessage receiveWebSocketMessage = new ReceiveWebSocketMessage();
+        WebSocketMessage receiveWebSocketMessage = new WebSocketMessage();
         receiveWebSocketMessage.setSender("系统消息");
         receiveWebSocketMessage.setMessage("欢迎加入聊天室，当前在线人数: " + sessions.size());
-        receiveWebSocketMessage.setReceiver(strings.get(0));
+        receiveWebSocketMessage.setReceiver(String.valueOf(userInfo.getId()));
         broadcast(receiveWebSocketMessage);
     }
 
@@ -54,9 +55,9 @@ public class ChatHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        SendWebSocketMessage bean = JSONUtil.toBean(payload, SendWebSocketMessage.class);
+        WebSocketMessage bean = JSONUtil.toBean(payload, WebSocketMessage.class);
         log.info("收到来自客户端的消息: {}", payload);
-        if ("heartbeat".equals(bean.type)) {
+        if ("heartbeat".equals(bean.getType())) {
             return;
         }
         broadcast(bean);
@@ -69,7 +70,7 @@ public class ChatHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
         log.info("有一连接关闭！当前在线人数为: {}", sessions.size());
-        broadcast("系统消息: 有用户离开聊天室，当前在线人数: " + sessions.size());
+//        broadcast("系统消息: 有用户离开聊天室，当前在线人数: " + sessions.size());
     }
 
     /**
@@ -88,17 +89,8 @@ public class ChatHandler extends TextWebSocketHandler {
      * 广播消息
      */
     private void broadcast(Object message) {
-        ReceiveWebSocketMessage receiveWebSocketMessage = new ReceiveWebSocketMessage();
+        WebSocketMessage receiveWebSocketMessage = new WebSocketMessage();
         BeanUtil.copyProperties(message, receiveWebSocketMessage);
-        receiveWebSocketMessage.setType("received");
-
-        // 1. 安全校验：防止 receiver 无效导致 NPE
-        User userInfo = tokenConfig.getUserInfo(receiveWebSocketMessage.getReceiver());
-        if (userInfo == null) {
-            log.warn("接收者不存在或 token 无效: {}", receiveWebSocketMessage.getReceiver());
-            return;
-        }
-        long receiverId = userInfo.getId();
 
         // 2. 遍历所有 session 进行精准投递
         for (WebSocketSession session : sessions) {
@@ -109,20 +101,23 @@ public class ChatHandler extends TextWebSocketHandler {
             long userId = (long) session.getAttributes().get("userId");
 
             // 3. 核心逻辑：仅向目标接收者发送消息（私聊）
-            if (userId == receiverId) {
+            if (userId == Long.parseLong(receiveWebSocketMessage.getReceiver())) {
                 try {
                     // 4. 正确的加锁方式：锁住 session 对象本身，防止并发发送报错
                     synchronized (session) {
+                        receiveWebSocketMessage.setType("userMessage");
                         session.sendMessage(new TextMessage(JSONUtil.toJsonStr(receiveWebSocketMessage)));
+                        return;
                     }
                 } catch (IOException e) {
                     log.error("发送消息失败", e);
                     sessions.remove(session); // 发送失败建议移除失效 session
                 }
-            } else if (StrUtil.equals("system", receiveWebSocketMessage.getType())) {
+            } else if (StrUtil.equals(ChatMessageEnums.SYSTEM_MESSAGE.getValue(), receiveWebSocketMessage.getType())) {
                 try {
                     // 4. 正确的加锁方式：锁住 session 对象本身，防止并发发送报错
                     synchronized (session) {
+                        receiveWebSocketMessage.setType(ChatMessageEnums.SYSTEM_MESSAGE.getValue());
                         session.sendMessage(new TextMessage(JSONUtil.toJsonStr(receiveWebSocketMessage)));
                     }
                 } catch (IOException e) {
@@ -131,24 +126,5 @@ public class ChatHandler extends TextWebSocketHandler {
                 }
             }
         }
-    }
-
-
-    @Data
-    class SendWebSocketMessage {
-        private String message;
-        private String type;
-        private String sender;
-        private String receiver;
-        private String time;
-    }
-
-    @Data
-    class ReceiveWebSocketMessage {
-        private String message;
-        private String type;
-        private String sender;
-        private String receiver;
-        private String time;
     }
 }

@@ -20,7 +20,10 @@ import DoAnswerPage from "@/views/answer/DoAnswerPage.vue";
 import AnswerResultPage from "@/views/answer/AnswerResultPage.vue";
 import AppStatisticPage from "@/views/statistic/AppStatisticPage.vue";
 import AIBot from "@/views/ai/AIBot.vue";
+import ChatHome from "@/views/chat/Home.vue";
 import WebChat from "@/views/chat/WebChat.vue";
+import UserFriends from "@/views/chat/UserFriends.vue";
+import WebChatLayout from "@/views/chat/WebChatLayout.vue";
 
 export const routes: Array<RouteRecordRaw> = [
   {
@@ -36,7 +39,28 @@ export const routes: Array<RouteRecordRaw> = [
   {
     path: "/web/chat",
     name: "好友聊天",
-    component: WebChat,
+    component: WebChatLayout,
+    children: [
+      {
+        path: "",
+        component: ChatHome,
+      },
+      {
+        path: "home",
+        name: "聊天主页",
+        component: ChatHome,
+      },
+      {
+        path: "friends",
+        name: "好友列表",
+        component: UserFriends,
+      },
+      {
+        path: ":id",
+        name: "WebChat",
+        component: WebChat,
+      },
+    ]
   },
   {
     path: "/ai/chat",

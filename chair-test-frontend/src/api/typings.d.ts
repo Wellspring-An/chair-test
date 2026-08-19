@@ -900,7 +900,7 @@ declare namespace API {
     userRole?: string;
   };
 
-  type SendWebSocketMessage = {
+  type WebSocketMessage = {
     message?: string;
     type: string;
     sender: string;
@@ -908,11 +908,22 @@ declare namespace API {
     time?: string;
   }
 
-  type receiveWebSocketMessage = {
-    message?: string;
-    type: string;
-    sender: string;
-    receiver?: string;
-    time?: string;
+  type UserFriendVo = {
+    id?: number;
+    userId?: number;
+    friendId: number;
+    friendAvatar?: string;
+    /** 好友备注 */
+    remark?: string;
+    /** 状态 0待同意 1已成为好友 2拒绝 3已删除 4拉黑 */
+    status?: number;
+    /** 申请好友留言 */
+    applyMsg?: string;
+    /** 申请好友时间 */
+    applyTime?: string;
+    /** 同意好友时间 */
+    agreeTime?: string;
+    createTime?: string;
+    updateTime?: string;
   }
 }

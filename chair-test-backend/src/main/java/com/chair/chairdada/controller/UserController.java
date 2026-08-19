@@ -300,6 +300,26 @@ public class UserController {
         return ResultUtils.success(userVOPage);
     }
 
+    /**
+     * 分页获取用户封装列表
+     *
+     * @return
+     */
+    @PostMapping("/list/AllVo")
+    @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
+    public BaseResponse<List<UserVO>> listUserAllVO() {
+        List<UserVO> userVO = userService.getUserVO(userService.list());
+        return ResultUtils.success(userVO);
+//        // 限制爬虫
+//        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+//        Page<User> userPage = userService.page(new Page<>(current, size),
+//                userService.getQueryWrapper(userQueryRequest));
+//        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
+//        List<UserVO> userVO = userService.getUserVO(userPage.getRecords());
+//        userVOPage.setRecords(userVO);
+//        return ResultUtils.success(userVOPage);
+    }
+
     // endregion
 
     /**

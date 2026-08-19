@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick } from "vue";
 import { chatController } from "@/api/chatController";
+import { useLoginUserStore } from "@/store/userStore";
+import chatTypeEnum from "@/access/chatTypeEnum.ts";
+import { useRoute, useRouter } from "vue-router";
 
+const route = useRoute();
+const router = useRouter();
 const inputMessage = ref("");
-const messages = reactive<API.SendWebSocketMessage[]>([]);
-const isConnected = ref(false);
+const messages = reactive<API.ReceiveWebSocketMessage[]>([]);
+// const isConnected = ref(false);
 const chatWindowRef = ref<HTMLElement | null>(null);
+const userStore = useLoginUserStore();
+
+// 目标聊天好友ID，写死测试，实际切换好友赋值这个变量
+const targetReceiverUserId = ref(route.params.id || 0);
 
 const cleanups: (() => void)[] = [];
 
@@ -25,17 +34,25 @@ const scrollToBottom = async () => {
 const sendMessage = () => {
   const content = inputMessage.value.trim();
   if (!content) return;
-  const sentMsg: API.SendWebSocketMessage = {
+  const currentUserId = userStore.loginUser?.id;
+  if (!currentUserId) return;
+  console.log(targetReceiverUserId.value)
+
+  // 和后端ChatHandler.WebSocketMessage对齐
+  const sentMsg: API.WebSocketMessage = {
     message: content,
-    type: 'sent',
-    sender: localStorage.getItem("chair-token"),
-    receiver: '',
+    type: chatTypeEnum.USER_MESSAGE,
+    sender: currentUserId,
+    receiver: targetReceiverUserId.value,
     time: formatTime(new Date()),
   };
   const success = chatController.send(JSON.stringify(sentMsg));
 
   if (success) {
-    messages.push(sentMsg);
+    // 本地渲染自己发出消息
+    messages.push({
+      ...sentMsg,
+    });
     inputMessage.value = "";
     scrollToBottom();
   } else {
@@ -43,49 +60,31 @@ const sendMessage = () => {
   }
 };
 
-const closeConnection = () => {
-  if (isConnected.value === true) {
-    chatController.close();
-    isConnected.value = false;
-  }else {
-    chatController.connect();
-    isConnected.value = true;
-  }
-};
-
 onMounted(() => {
-  // ✅关键：组件挂载瞬间读取全局controller真实状态！解决切页面状态不同步
-  isConnected.value = chatController.isOpen;
-
-  // 注册事件监听
-  cleanups.push(
-    chatController.onOpen(() => {
-      isConnected.value = true;
-    })
-  );
-
-  cleanups.push(
-    chatController.onClose(() => {
-      isConnected.value = false;
-    })
-  );
-
   cleanups.push(
     chatController.onMessage((raw: string) => {
-      const parsedData = JSON.parse(raw);
-      const newMsg: API.ReceiveWebSocketMessage = parsedData
-      messages.push(newMsg);
+      const parsedData = JSON.parse(raw) as API.ReceiveWebSocketMessage;
+
+      // ✅关键过滤：好友申请通知不要渲染进聊天框
+      if (parsedData.type === chatTypeEnum.ADD_USER_MESSAGE) {
+        return;
+      }
+      // 普通聊天消息才加入列表
+      messages.push(parsedData);
       scrollToBottom();
     })
   );
-
-  chatController.connect(); // 只保留一次
 });
 
 onUnmounted(() => {
   cleanups.forEach((cleanup) => cleanup());
-  // chatController.close(); // 全局单例，组件销毁不要关闭ws！注释保持
+  // 组件销毁，绝不关闭全局ws
 });
+
+const routerTo = (path: any) => {
+  console.log(path);
+  router.push(path);
+}
 </script>
 
 <template>
@@ -94,20 +93,15 @@ onUnmounted(() => {
       <!-- 头部 -->
       <header class="chat-header">
         <div class="user-info">
-          <div class="avatar">CG</div>
+          <div @click="routerTo('/web/chat')">
+            <icon-to-left size="20" />
+          </div>
           <div class="details">
             <h3>CodeGeeX 助手</h3>
-            <span :class="['status', isConnected ? 'online' : 'offline']">
-              {{ isConnected ? "在线" : "连接中..." }}
-            </span>
+<!--            <span :class="['status', isConnected ? 'online' : 'offline']">-->
+<!--              {{ isConnected ? "在线" : "连接中..." }}-->
+<!--            </span>-->
           </div>
-          <a-button
-            type="text"
-            class="close-btn"
-            @click="closeConnection"
-          >
-            {{isConnected ? '关闭连接' : '打开连接'}}
-          </a-button>
         </div>
       </header>
 
@@ -115,8 +109,8 @@ onUnmounted(() => {
       <main class="chat-window" ref="chatWindowRef">
         <div
           v-for="msg in messages"
-          :key="msg.id"
-          :class="['message-row', msg.type === 'sent' ? 'sent' : 'received']"
+          :key="msg.time + msg.message"
+          :class="['message-row', msg.sender === userStore.loginUser?.id ? 'sent' : 'received']"
         >
           <div class="message-bubble">
             <p class="message-content">{{ msg.message }}</p>
@@ -132,11 +126,10 @@ onUnmounted(() => {
           v-model="inputMessage"
           placeholder="输入消息按回车发送..."
           @keyup.enter="sendMessage"
-          :disabled="!isConnected"
         />
         <button
           @click="sendMessage"
-          :disabled="!isConnected || !inputMessage.trim()"
+          :disabled="!inputMessage.trim()"
         >
           发送
         </button>
@@ -170,6 +163,8 @@ onUnmounted(() => {
 }
 .chat-header {
   padding: 16px;
+  height: 20px;
+  line-height: 20px;
   background-color: #f7f7f7;
   border-bottom: 1px solid #ececec;
 }
@@ -190,6 +185,8 @@ onUnmounted(() => {
   margin-right: 12px;
 }
 .details h3 {
+  position: relative;
+  left: 25%;
   margin: 0;
   font-size: 16px;
   color: #333;
