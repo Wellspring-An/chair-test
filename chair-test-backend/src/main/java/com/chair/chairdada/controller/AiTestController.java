@@ -144,10 +144,6 @@ public class AiTestController {
     @PostMapping("/Ai/testAddApp")
     @AuthCheck(mustRole = "user")
     public BaseResponse<String> testAddApp(@RequestParam("userMessage") String userPrompt) throws GraphRunnerException {
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
-
-        TestTools.setRequest(request);
 
         User userInfo = tokenConfig.getUserInfo();
 
@@ -175,10 +171,6 @@ public class AiTestController {
     @PostMapping(value = "/Ai/testAddAppStream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @AuthCheck(mustRole = "user")
     public Flux<String> testAddAppStream(@RequestParam("userMessage") String userPrompt) throws GraphRunnerException {
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
-        TestTools.setRequest(request);
-
         User userInfo = tokenConfig.getUserInfo();
         String threadId = userInfo.getUserAccount() + "_" + userInfo.getId();
 
@@ -196,6 +188,7 @@ public class AiTestController {
 
         RunnableConfig config = RunnableConfig.builder()
                 .threadId(threadId)
+                .addMetadata("userId", userInfo.getId())
                 .build();
 
         UserMessage userMessage = new UserMessage(userPrompt);

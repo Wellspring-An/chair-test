@@ -2,6 +2,7 @@ package com.chair.chairdada.controller;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chair.chairdada.annotation.AuthCheck;
 import com.chair.chairdada.bigmodel.AiChatManager;
@@ -266,7 +267,7 @@ public class QuestionController {
     // endregion
 
     // region AI 生成题目功能
-    private static final String GENERATE_QUESTION_SYSTEM_MESSAGE = "你是一位严谨的出题专家，我会给你如下信息：\n" +
+    public static final String GENERATE_QUESTION_SYSTEM_MESSAGE = "你是一位严谨的出题专家，我会给你如下信息：\n" +
             "```\n" +
             "应用名称，\n" +
             "应用描述，\n" +
@@ -294,10 +295,11 @@ public class QuestionController {
      * @param optionNumber
      * @return
      */
-    private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {
+    private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber, Question questionContent) {
         StringBuilder userMessage = new StringBuilder();
         userMessage.append("应用名称:" + app.getAppName()).append("\n");
         userMessage.append("应用描述:" + app.getAppDesc()).append("\n");
+        userMessage.append("已经有的题目:" + (null == questionContent ? "" : JSONUtil.parseObj(questionContent.getQuestionContent()))).append("\n");
         userMessage.append("应用类别:" + AppTypeEnum.getEnumByValue(app.getAppType()).getText() + "类").append("\n");
         userMessage.append("要生成的题目数:" + questionNumber).append("\n");
         userMessage.append("每个题目的选项数:" + optionNumber);
@@ -314,9 +316,11 @@ public class QuestionController {
         int optionNumber = aiGenerateQuestionRequest.getOptionNumber();
         // 获取应用信息
         App app = appService.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        LambdaQueryWrapper<Question> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Question::getAppId, appId);
+        Question question = questionService.getOne(queryWrapper);
         // 封装 Prompt
-        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber, question);
         // AI 生成
         String result = aiManager.AiChat(userMessage, GENERATE_QUESTION_SYSTEM_MESSAGE);
         log.info("ai生成题目：{}", result);
@@ -340,8 +344,11 @@ public class QuestionController {
         // 获取应用信息
         App app = appService.getById(appId);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        LambdaQueryWrapper<Question> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Question::getAppId, appId);
+        Question question = questionService.getOne(queryWrapper);
         // 封装 Prompt
-        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber, question);
         // 建立 SSE 连接对象，0 表示永不超时
         SseEmitter sseEmitter = new SseEmitter(0L);
         // AI 生成，SSE 流式返回

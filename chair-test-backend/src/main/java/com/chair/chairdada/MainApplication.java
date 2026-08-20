@@ -13,7 +13,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
  */
 // todo 如需开启 Redis，须移除 exclude 中的内容
 @SpringBootApplication
-@MapperScan("com.chair.chairdada.mapper")
+@MapperScan({"com.chair.chairdada.mapper"})
 @EnableScheduling
 @EnableWebSocket
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)

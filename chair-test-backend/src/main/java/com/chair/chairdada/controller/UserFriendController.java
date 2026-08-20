@@ -12,6 +12,7 @@ import com.chair.chairdada.constant.UserConstant;
 import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.model.entity.User;
 import com.chair.chairdada.model.entity.UserFriend;
+import com.chair.chairdada.model.enums.AddFriendStatusEnum;
 import com.chair.chairdada.model.vo.UserFriendVo;
 import com.chair.chairdada.service.UserFriendService;
 import jakarta.annotation.Resource;
@@ -47,6 +48,9 @@ public class UserFriendController {
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
     public BaseResponse addFriend(@RequestBody UserFriendVo userFriendVo) {
+        if (userFriendVo.getFriendId().equals(userFriendVo.getUserId())) {
+            return ResultUtils.error(ErrorCode.ADD_FRIEND_NOT_ME_ERROR);
+        }
         User userInfo = tokenConfig.getUserInfo();
         userFriendVo.setUserId(userInfo.getId());
         UserFriend userFriend = new UserFriend();
@@ -58,11 +62,18 @@ public class UserFriendController {
         queryWrapper.eq(UserFriend::getUserId, userFriend.getUserId());
         queryWrapper.eq(UserFriend::getFriendId, userFriend.getFriendId());
         UserFriend one = userFriendService.getOne(queryWrapper);
-        if (one != null) {
+        if (one.getStatus().equals(AddFriendStatusEnum.AGREE.getValue())) {
             return ResultUtils.error(ErrorCode.ADD_FRIEND_ERROR);
         }
-        // 添加好友逻辑
-        boolean save = userFriendService.save(userFriend);
+        boolean save;
+        if (one == null) {
+            // 添加好友逻辑
+            save = userFriendService.save(userFriend);
+        }else {
+            // 更新好友逻辑
+            one.setStatus(AddFriendStatusEnum.APPLY.getValue());
+            save = userFriendService.updateById(one);
+        }
         return ResultUtils.success(save);
     }
 
