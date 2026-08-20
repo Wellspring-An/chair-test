@@ -9,11 +9,13 @@ import com.chair.chairdada.common.ErrorCode;
 import com.chair.chairdada.common.ResultUtils;
 import com.chair.chairdada.config.TokenConfig;
 import com.chair.chairdada.constant.UserConstant;
+import com.chair.chairdada.exception.BusinessException;
 import com.chair.chairdada.model.entity.User;
 import com.chair.chairdada.model.entity.UserFriend;
 import com.chair.chairdada.model.vo.UserFriendVo;
 import com.chair.chairdada.service.UserFriendService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +33,7 @@ import java.util.List;
  * @author chair
  * @since 2026-08-13
  */
+@Slf4j
 @RestController
 @RequestMapping("/userFriend")
 public class UserFriendController {
@@ -61,6 +64,30 @@ public class UserFriendController {
         // 添加好友逻辑
         boolean save = userFriendService.save(userFriend);
         return ResultUtils.success(save);
+    }
+
+    @PostMapping("/updateById")
+    @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
+    public BaseResponse updateFriendById(@RequestBody UserFriendVo userFriendVo) {
+        User userInfo = tokenConfig.getUserInfo();
+        userFriendVo.setUserId(userInfo.getId());
+        UserFriend userFriend = new UserFriend();
+        BeanUtil.copyProperties(userFriendVo, userFriend);
+        userFriend.setAgreeTime(LocalDateTime.now());
+        userFriend.setStatus(userFriendVo.getStatus());
+        LambdaQueryWrapper<UserFriend> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserFriend::getId, userFriend.getId());
+        boolean b;
+        try {
+            b = userFriendService.updateById(userFriend);
+        }catch (Exception e) {
+            log.error("更新好友关系时发生异常: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+        if (!b) {
+            return ResultUtils.error(ErrorCode.UPDATE_FRIEND_ERROR);
+        }
+        return ResultUtils.success(b);
     }
 
     @PostMapping("/selectAll")

@@ -14,7 +14,8 @@ public enum ErrorCode {
     SYSTEM_ERROR(50000, "系统内部异常"),
     OPERATION_ERROR(50001, "操作失败"),
     AI_COUNT_EXCEEDED(40102, "今日次数已用完"),
-    ADD_FRIEND_ERROR(40200, "好友申请已经存在");
+    ADD_FRIEND_ERROR(40200, "好友申请已经存在"),
+    UPDATE_FRIEND_ERROR(40201, "好友申请信息更新失败");
 
     /**
      * 状态码

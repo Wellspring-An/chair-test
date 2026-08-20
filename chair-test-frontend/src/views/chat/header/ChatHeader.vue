@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from "vue";
 import { listUserAllVO } from "@/api/userController.ts";
-import { addUserFriend, selectAll } from "@/api/webChatController.ts";
+import { addUserFriend } from "@/api/webChatController.ts";
 import { useRouter } from "vue-router";
 import message from "@arco-design/web-vue/es/message";
 
@@ -10,7 +10,6 @@ const router = useRouter();
 const show = ref(false);
 const size = ref("medium");
 const users = ref<API.User>([]);
-const myFriends = ref<API.UserFriendVo>([]);
 
 // 点击页面空白关闭
 const handleDocumentClick = (e: MouseEvent) => {
@@ -36,18 +35,8 @@ const addFriend = async () => {
   }
 }
 
-const getAllUser = async () => {
-  const res = await selectAll();
-  if (res.data.code === 0) {
-    myFriends.value = res.data.data;
-  }else {
-    message.warning(res.data.message);
-  }
-}
-
 onMounted(() => {
   document.addEventListener("click", handleDocumentClick);
-  getAllUser();
 });
 onUnmounted(() => {
   document.removeEventListener("click", handleDocumentClick);

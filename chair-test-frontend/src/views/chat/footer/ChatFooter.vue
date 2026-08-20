@@ -31,5 +31,10 @@ const routerTo = (path: any) => {
 </template>
 
 <style scoped>
-
+.chat-input-area {
+  text-align: center;
+  padding: 12px;
+  background-color: #f7f7f7;
+  border-top: 1px solid #ececec
+}
 </style>

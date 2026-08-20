@@ -29,13 +29,23 @@
         select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
                  left join user u on uf.friend_id = u.id
-        where user_id = #{userId} and status = 1
+        where user_id =  #{userId} and status = 1
+        union
+        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
+        from user_friend uf
+                 left join user u on uf.friend_id = u.id
+        where friend_id =  #{userId} and status = 1
     </select>
 
     <select id="getNotFriendList" resultMap="BaseResultMap">
         select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
                  left join user u on uf.friend_id = u.id
-        where user_id = #{userId} and status != 1
+        where user_id =  #{userId}
+        union
+        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
+        from user_friend uf
+                 left join user u on uf.friend_id = u.id
+        where friend_id =  #{userId}
     </select>
 </mapper>
