@@ -30,6 +30,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
@@ -54,47 +55,50 @@ public class TestTools {
         this.questionService = questionController;
         this.aiManager = aiManager;
     }
-//
-//    @Tool(description = "创建测试应用。根据用户提供的信息创建一个新的测试应用，返回应用ID")
-//    public String createApp(
-//            @ToolParam(description = "测试应用名称，例如：性格测试、能力测评") String appName,
-//            @ToolParam(description = "测试应用描述，简要说明测试的目的和内容") String appDesc,
-//            @ToolParam(description = "应用类型：0-得分类（有标准答案和分数），1-测评类（无标准答案，根据选项组合出结果）") Integer appType,
-//            @ToolParam(description = "评分策略：0-自定义评分规则，1-AI智能评分") Integer scoringStrategy,
-//            ToolContext toolContext
-//    ) {
-//        try {
-//            long userId = (long) toolContext.getContext().get("userId");
-//
-//            AppAddRequest appAddRequest = new AppAddRequest();
-//            appAddRequest.setAppName(appName);
-//            appAddRequest.setAppDesc(StringUtils.isBlank(appDesc) ? "http://localhost:8008/img/logo.a499c16d.png" : appDesc);
-//            appAddRequest.setAppType(appType);
-//            appAddRequest.setScoringStrategy(scoringStrategy);
-//
-//            App app = new App();
-//            BeanUtil.copyProperties(appAddRequest, app);
-//            app.setUserId(userId);
-//            app.setReviewStatus(ReviewStatusEnum.REVIEWING.getValue());
-//            // 写入数据库
-//            boolean appResult = appService.save(app);
-//            // 返回新写入的数据 id
-//            long appId = app.getId();
-//
-//            if (appResult) {
-//                return "✅ 成功创建测试应用！\n" +
-//                        "应用ID: " + appId + "\n" +
-//                        "应用名称: " + appName + "\n" +
-//                        "接下来可以使用 addQuestion 工具添加测试题目";
-//            } else {
-//                return "❌ 创建失败";
-//            }
-//        } catch (Exception e) {
-//            return "❌ 创建应用时发生异常: " + e.getMessage();
-//        }
-//    }
+
+    @Tool(description = "创建测试应用。根据用户提供的信息创建一个新的测试应用，返回应用ID")
+    @Transactional
+    public String createApp(
+            @ToolParam(description = "测试应用名称，例如：性格测试、能力测评") String appName,
+            @ToolParam(description = "测试应用描述，简要说明测试的目的和内容") String appDesc,
+            @ToolParam(description = "应用类型：0-得分类（有标准答案和分数），1-测评类（无标准答案，根据选项组合出结果）") Integer appType,
+            @ToolParam(description = "评分策略：0-自定义评分规则，1-AI智能评分") Integer scoringStrategy,
+            ToolContext toolContext
+    ) {
+        try {
+            long userId = (long) toolContext.getContext().get("userId");
+
+            AppAddRequest appAddRequest = new AppAddRequest();
+            appAddRequest.setAppName(appName);
+            appAddRequest.setAppDesc(StringUtils.isBlank(appDesc) ? "http://localhost:8008/img/logo.a499c16d.png" : appDesc);
+            appAddRequest.setAppType(appType);
+            appAddRequest.setScoringStrategy(scoringStrategy);
+
+            App app = new App();
+            BeanUtil.copyProperties(appAddRequest, app);
+            app.setUserId(userId);
+            app.setReviewStatus(ReviewStatusEnum.REVIEWING.getValue());
+            // 写入数据库
+            boolean appResult = appService.save(app);
+            // 返回新写入的数据 id
+            long appId = app.getId();
+
+            if (appResult) {
+                return "✅ 成功创建测试应用！\n" +
+                        "应用ID: " + appId + "\n" +
+                        "应用名称: " + appName + "\n" +
+                        "接下来可以使用 addQuestion 工具添加测试题目";
+            } else {
+                return "❌ 创建失败";
+            }
+        } catch (Exception e) {
+            log.error("创建应用时发生异常: {}", e.getMessage());
+            return "❌ 创建应用时发生异常: " + e.getMessage();
+        }
+    }
 
     @Tool(description = "更新测试应用。根据用户提供的信息更新测试应用")
+    @Transactional
     public String updateApp(
             @ToolParam(description = "测试应用ID，例如：1") String appId,
             @ToolParam(description = "测试应用名称，例如：性格测试、能力测评") String appName,
@@ -136,6 +140,7 @@ public class TestTools {
                 return "❌ 更新失败";
             }
         } catch (Exception e) {
+            log.error("❌ 更新应用时发生异常: " + e.getMessage());
             return "❌ 更新应用时发生异常: " + e.getMessage();
         }
     }
@@ -172,49 +177,52 @@ public class TestTools {
                 return "❌ 获取失败";
             }
         } catch (Exception e) {
+            log.error("❌ 更新应用时发生异常: " + e.getMessage());
             return "❌ 更新应用时发生异常: " + e.getMessage();
         }
     }
 
-//    @Tool(description = "为测试应用添加题目")
-//    public String addQuestion(
-//            @ToolParam(description = "应用ID，要添加题目的测试应用ID") Long appId,
-//            @ToolParam(description = "题目数量") Integer questionNum,
-//            @ToolParam(description = "选项数量") Integer optionNum,
-//            ToolContext toolContext
-//    ) {
-//        try {
-//            long userId = (long) toolContext.getContext().get("userId");
-//            AiGenerateQuestionRequest aiGenerateQuestionRequest = new AiGenerateQuestionRequest();
-//            aiGenerateQuestionRequest.setAppId(appId);
-//            aiGenerateQuestionRequest.setQuestionNumber(questionNum);
-//            aiGenerateQuestionRequest.setOptionNumber(optionNum);
-//
-//            BaseResponse<List<QuestionContentDTO>> listBaseResponse = questionController.aiGenerateQuestion(aiGenerateQuestionRequest);
-//
-//            QuestionAddRequest questionAddRequest = new QuestionAddRequest();
-//            questionAddRequest.setAppId(appId);
-//            questionAddRequest.setQuestionContent(listBaseResponse.getData());
-//
-//            Question question = new Question();
-//            BeanUtils.copyProperties(questionAddRequest, question);
-//            List<QuestionContentDTO> questionContentDTO = questionAddRequest.getQuestionContent();
-//            question.setQuestionContent(JSONUtil.toJsonStr(questionContentDTO));
-//            // 数据校验
-//            questionService.validQuestion(question, true);
-//            question.setUserId(userId);
-//            // 写入数据库
-//            boolean result = questionService.save(question);
-//
-//            if (result) {
-//                return "✅ 成功添加题目，题目ID: " + question.getId();
-//            } else {
-//                return "❌ 添加失败";
-//            }
-//        } catch (Exception e) {
-//            return "❌ 添加题目时发生异常: " + e.getMessage();
-//        }
-//    }
+    @Tool(description = "为测试应用添加题目")
+    @Transactional
+    public String addQuestion(
+            @ToolParam(description = "应用ID，要添加题目的测试应用ID") Long appId,
+            @ToolParam(description = "题目数量") Integer questionNum,
+            @ToolParam(description = "选项数量") Integer optionNum,
+            ToolContext toolContext
+    ) {
+        try {
+            long userId = (long) toolContext.getContext().get("userId");
+            AiGenerateQuestionRequest aiGenerateQuestionRequest = new AiGenerateQuestionRequest();
+            aiGenerateQuestionRequest.setAppId(appId);
+            aiGenerateQuestionRequest.setQuestionNumber(questionNum);
+            aiGenerateQuestionRequest.setOptionNumber(optionNum);
+
+            BaseResponse<List<QuestionContentDTO>> listBaseResponse = AiGenerateQuestion(aiGenerateQuestionRequest);
+
+            QuestionAddRequest questionAddRequest = new QuestionAddRequest();
+            questionAddRequest.setAppId(appId);
+            questionAddRequest.setQuestionContent(listBaseResponse.getData());
+
+            Question question = new Question();
+            BeanUtils.copyProperties(questionAddRequest, question);
+            List<QuestionContentDTO> questionContentDTO = questionAddRequest.getQuestionContent();
+            question.setQuestionContent(JSONUtil.toJsonStr(questionContentDTO));
+            // 数据校验
+            questionService.validQuestion(question, true);
+            question.setUserId(userId);
+            // 写入数据库
+            boolean result = questionService.save(question);
+
+            if (result) {
+                return "✅ 成功添加题目，题目ID: " + question.getId();
+            } else {
+                return "❌ 添加失败";
+            }
+        } catch (Exception e) {
+            log.error("❌ 添加题目时发生异常: " + e.getMessage());
+            return "❌ 添加题目时发生异常: " + e.getMessage();
+        }
+    }
 
     @Tool(description = "创建测试应用，并创建应用的相关信息")
     public String addAppAllInfo(
@@ -277,6 +285,7 @@ public class TestTools {
                 return "❌ 添加失败";
             }
         } catch (Exception e) {
+            log.error("❌ 添加题目时发生异常: " + e.getMessage());
             return "❌ 添加题目时发生异常: " + e.getMessage();
         }
     }
