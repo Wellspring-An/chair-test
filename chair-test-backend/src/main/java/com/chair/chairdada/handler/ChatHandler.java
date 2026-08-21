@@ -107,7 +107,6 @@ public class ChatHandler extends TextWebSocketHandler {
                     synchronized (session) {
                         receiveWebSocketMessage.setType("userMessage");
                         session.sendMessage(new TextMessage(JSONUtil.toJsonStr(receiveWebSocketMessage)));
-                        return;
                     }
                 } catch (IOException e) {
                     log.error("发送消息失败", e);

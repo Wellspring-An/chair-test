@@ -31,9 +31,9 @@
                  left join user u on uf.friend_id = u.id
         where user_id =  #{userId} and status = 1
         union
-        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
+        select uf.id, uf.friend_id as user_id,uf.user_id as friend_id, uf.remark, uf.status, uf.apply_msg, uf.apply_time, uf.agree_time, uf.create_time, uf.update_time, u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
-                 left join user u on uf.friend_id = u.id
+                 left join user u on uf.user_id = u.id
         where friend_id =  #{userId} and status = 1
     </select>
 
@@ -43,9 +43,9 @@
                  left join user u on uf.friend_id = u.id
         where user_id =  #{userId}
         union
-        select uf.*,u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
+        select uf.id, uf.friend_id as user_id,uf.user_id as friend_id, uf.remark, uf.status, uf.apply_msg, uf.apply_time, uf.agree_time, uf.create_time, uf.update_time, u.userAvatar as friendAvatar,u.userName as userName,u.userAccount as userAccount
         from user_friend uf
-                 left join user u on uf.friend_id = u.id
+                 left join user u on uf.user_id = u.id
         where friend_id =  #{userId}
     </select>
 </mapper>
