@@ -13,10 +13,15 @@ class ChatController {
   private onCloseHandlers: Set<() => void> = new Set();
 
   constructor() {
-    this.url = `/api/web/chat`;
+    // 开发环境：用相对路径，走vite代理；生产环境直接访问后端域名wss
+    if (import.meta.env.DEV) {
+      this.url = `/api/web/chat`;
+    } else {
+      // 生产环境直接指向后端域名，https对应wss
+      this.url = `ws://backend.chairabc.cloud/api/web/chat`;
+    }
   }
 
-  // ✅新增：对外暴露实时读取连接状态
   public get isOpen(): boolean {
     return !!this.socket && this.socket.readyState === WebSocket.OPEN;
   }
@@ -30,9 +35,10 @@ class ChatController {
       return;
     }
     this.manuallyClosed = false;
+    const token = localStorage.getItem('chair-token') || '';
 
     try {
-      this.socket = new WebSocket(this.url+`?chair-token=${localStorage.getItem('chair-token')}`);
+      this.socket = new WebSocket(this.url + `?chair-token=${token}`);
 
       this.socket.onopen = () => {
         console.log("WebSocket 连接成功");
