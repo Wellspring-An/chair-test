@@ -1,6 +1,6 @@
 // src/store/chatStore.ts
-import { ref } from 'vue';
-import { chatController } from '@/api/chatController';
+import { ref } from "vue";
+import { chatController } from "@/api/chatController";
 
 export const useChatStore = () => {
   const isConnected = ref(false);
@@ -15,6 +15,6 @@ export const useChatStore = () => {
   });
 
   return {
-    isConnected
+    isConnected,
   };
 };

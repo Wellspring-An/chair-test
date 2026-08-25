@@ -165,7 +165,7 @@ const handleSSESubmit = async () => {
       onerror(err) {
         throw err; // 抛出错误触发自动重试[2](@ref)
       },
-    }
+    },
   );
   sseSubmitting.value = false;
 };

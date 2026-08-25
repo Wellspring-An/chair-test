@@ -36,7 +36,7 @@ const sendMessage = () => {
   if (!content) return;
   const currentUserId = userStore.loginUser?.id;
   if (!currentUserId) return;
-  console.log(targetReceiverUserId.value)
+  console.log(targetReceiverUserId.value);
 
   // 和后端ChatHandler.WebSocketMessage对齐
   const sentMsg: API.WebSocketMessage = {
@@ -72,7 +72,7 @@ onMounted(() => {
       // 普通聊天消息才加入列表
       messages.push(parsedData);
       scrollToBottom();
-    })
+    }),
   );
 });
 
@@ -84,7 +84,7 @@ onUnmounted(() => {
 const routerTo = (path: any) => {
   console.log(path);
   router.push(path);
-}
+};
 </script>
 
 <template>
@@ -98,9 +98,9 @@ const routerTo = (path: any) => {
           </div>
           <div class="details">
             <h3>CodeGeeX 助手</h3>
-<!--            <span :class="['status', isConnected ? 'online' : 'offline']">-->
-<!--              {{ isConnected ? "在线" : "连接中..." }}-->
-<!--            </span>-->
+            <!--            <span :class="['status', isConnected ? 'online' : 'offline']">-->
+            <!--              {{ isConnected ? "在线" : "连接中..." }}-->
+            <!--            </span>-->
           </div>
         </div>
       </header>
@@ -110,7 +110,10 @@ const routerTo = (path: any) => {
         <div
           v-for="msg in messages"
           :key="msg.time + msg.message"
-          :class="['message-row', msg.sender === userStore.loginUser?.id ? 'sent' : 'received']"
+          :class="[
+            'message-row',
+            msg.sender === userStore.loginUser?.id ? 'sent' : 'received',
+          ]"
         >
           <div class="message-bubble">
             <p class="message-content">{{ msg.message }}</p>
@@ -127,10 +130,7 @@ const routerTo = (path: any) => {
           placeholder="输入消息按回车发送..."
           @keyup.enter="sendMessage"
         />
-        <button
-          @click="sendMessage"
-          :disabled="!inputMessage.trim()"
-        >
+        <button @click="sendMessage" :disabled="!inputMessage.trim()">
           发送
         </button>
       </footer>
@@ -146,8 +146,9 @@ const routerTo = (path: any) => {
   align-items: center;
   height: 100vh;
   background-color: #f0f2f5;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-  Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 .chat-card {
   width: 100%;

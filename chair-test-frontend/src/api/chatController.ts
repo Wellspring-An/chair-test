@@ -35,7 +35,7 @@ class ChatController {
       return;
     }
     this.manuallyClosed = false;
-    const token = localStorage.getItem('chair-token') || '';
+    const token = localStorage.getItem("chair-token") || "";
 
     try {
       this.socket = new WebSocket(this.url + `?chair-token=${token}`);

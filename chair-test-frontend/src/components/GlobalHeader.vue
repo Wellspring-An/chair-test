@@ -23,15 +23,14 @@
     </a-col>
     <a-col flex="100px">
       <div v-if="loginUserStore.loginUser.id">
-
         <a-space>
           <a-dropdown position="bottom">
             <div>
               <a-avatar
-              :size="24"
-              :image-url="loginUserStore.loginUser?.userAvatar"
-              :style="{ marginRight: '8px' }"
-            />
+                :size="24"
+                :image-url="loginUserStore.loginUser?.userAvatar"
+                :style="{ marginRight: '8px' }"
+              />
               {{ loginUserStore.loginUser.userName ?? "无名" }}
             </div>
             <template #content>
@@ -43,10 +42,13 @@
       <div v-else>
         <a-button type="primary" href="/user/login">登录</a-button>
       </div>
-      <a-modal v-model:visible="visible" @ok="handleOk" @cancel="handleCancel" draggable>
-        <template #title>
-          是否退出登录
-        </template>
+      <a-modal
+        v-model:visible="visible"
+        @ok="handleOk"
+        @cancel="handleCancel"
+        draggable
+      >
+        <template #title> 是否退出登录 </template>
         <div>退出登录，您将无法使用现有功能！！！</div>
       </a-modal>
     </a-col>
@@ -78,12 +80,11 @@ const handleOk = () => {
 };
 const handleCancel = () => {
   visible.value = false;
-}
+};
 //路由跳转时，自动更新选中的菜单项
 router.afterEach((to, from, failure) => {
   selectedKeys.value = [to.path];
 });
-
 
 //展示在菜单栏的路由数组
 const visibleRoutes = computed(() => {

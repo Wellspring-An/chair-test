@@ -33,7 +33,7 @@ const addFriend = async () => {
   if (res.data.code !== 0) {
     message.warning(res.data.message);
   }
-}
+};
 
 onMounted(() => {
   document.addEventListener("click", handleDocumentClick);
@@ -61,8 +61,8 @@ const handleCancel = () => {
     <div class="user-info">
       <div class="details">
         <div class="anchor-trigger" @click.stop="show = !show">
-          <icon-plus v-if="!show" style="cursor: pointer; font-size:18px;" />
-          <icon-close v-if="show" style="cursor: pointer; font-size:18px;" />
+          <icon-plus v-if="!show" style="cursor: pointer; font-size: 18px" />
+          <icon-close v-if="show" style="cursor: pointer; font-size: 18px" />
 
           <!-- 原生锚点菜单 -->
           <div v-if="show" class="anchor-menu">
@@ -80,22 +80,26 @@ const handleCancel = () => {
     @cancel="handleCancel"
   >
     <template #title> 添加好友</template>
-    <div
-    >
+    <div>
       <a-space direction="vertical" size="large">
-        <a-select v-model="userFriend.friendId" :style="{width:'320px'}" :size="size"
-                  @search="searchUser"
-                  placeholder="请输入登录名或名字"
-                  allow-search
+        <a-select
+          v-model="userFriend.friendId"
+          :style="{ width: '320px' }"
+          :size="size"
+          @search="searchUser"
+          placeholder="请输入登录名或名字"
+          allow-search
         >
           <a-option v-for="item of users" :value="item.id">
             <a-image width="25" height="25" :src="item.userAvatar" />
-            <span style="padding-left: 5px">{{ item.userAccount }} - {{ item.userName }}</span></a-option>
+            <span style="padding-left: 5px"
+              >{{ item.userAccount }} - {{ item.userName }}</span
+            ></a-option
+          >
         </a-select>
         <a-input v-model="userFriend.applyMsg" placeholder="请输入申请原因" />
       </a-space>
-    </div
-    >
+    </div>
   </a-drawer>
 </template>
 

@@ -60,7 +60,7 @@ export const routes: Array<RouteRecordRaw> = [
         name: "WebChat",
         component: WebChat,
       },
-    ]
+    ],
   },
   {
     path: "/ai/chat",

@@ -84,7 +84,7 @@ const customRequest = async (option: any) => {
   const res: any = await uploadFileUsingPost(
     { biz: props.biz },
     {},
-    fileItem.file
+    fileItem.file,
   );
   if (res.data.code === 0 && res.data.data) {
     const url = res.data.data;

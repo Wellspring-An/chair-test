@@ -158,7 +158,7 @@ const sendStream = async () => {
       },
       {
         signal: abortController.signal,
-      }
+      },
     );
 
     if (!res.ok) {
@@ -220,7 +220,8 @@ const sendStream = async () => {
   max-width: 860px;
   margin: 0 auto;
   padding: 32px 24px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 h1 {

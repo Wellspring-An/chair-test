@@ -177,7 +177,7 @@ const doDelete = async (record: API.App) => {
 const doReview = async (
   record: API.App,
   reviewStatus: number,
-  reviewMessage?: string
+  reviewMessage?: string,
 ) => {
   if (!record.id) {
     return;

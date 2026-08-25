@@ -42,6 +42,6 @@ watch(
       $chat?.close();
     }
   },
-  { immediate: true } // immediate:true，页面刚打开立刻执行一次
+  { immediate: true }, // immediate:true，页面刚打开立刻执行一次
 );
 </script>

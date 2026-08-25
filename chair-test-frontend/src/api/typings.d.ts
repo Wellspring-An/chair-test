@@ -906,7 +906,7 @@ declare namespace API {
     sender: string;
     receiver?: string;
     time?: string;
-  }
+  };
 
   type UserFriendVo = {
     id?: number;
@@ -927,5 +927,5 @@ declare namespace API {
     agreeTime?: string;
     createTime?: string;
     updateTime?: string;
-  }
+  };
 }

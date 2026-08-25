@@ -175,7 +175,7 @@ const addQuestionOption = (question: API.QuestionContentDTO, index: number) => {
  */
 const deleteQuestionOption = (
   question: API.QuestionContentDTO,
-  index: number
+  index: number,
 ) => {
   if (!question.options) {
     question.options = [];

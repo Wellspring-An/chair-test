@@ -1,8 +1,7 @@
 import axios from "axios";
 import { Message } from "@arco-design/web-vue";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const myAxios = axios.create({
   baseURL: BASE_URL,
@@ -21,7 +20,7 @@ myAxios.interceptors.request.use(
   function (error) {
     // Do something with request error
     return Promise.reject(error);
-  }
+  },
 );
 
 // 全局响应拦截器
@@ -50,7 +49,7 @@ myAxios.interceptors.response.use(
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     return Promise.reject(error);
-  }
+  },
 );
 
 export default myAxios;

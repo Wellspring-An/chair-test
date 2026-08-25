@@ -1,4 +1,7 @@
-import { getLoginUserUsingGet, userLogoutUsingPost } from "@/api/userController";
+import {
+  getLoginUserUsingGet,
+  userLogoutUsingPost,
+} from "@/api/userController";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import ACCESS_ENUM from "@/access/accessEnum";
@@ -24,15 +27,15 @@ export const useLoginUserStore = defineStore("loginUser", () => {
     const res = await userLogoutUsingPost();
     if (res.data.code === 0 && res.data.data) {
       if (res.data.data === true) {
-        localStorage.removeItem("chair-token")
-        router.push("/")
-      }else {
-        confirm("退出失败，请重试")
-        router.push("/")
+        localStorage.removeItem("chair-token");
+        router.push("/");
+      } else {
+        confirm("退出失败，请重试");
+        router.push("/");
       }
-    }else {
-      confirm("退出失败，请重试")
-      router.push("/")
+    } else {
+      confirm("退出失败，请重试");
+      router.push("/");
     }
   }
 

@@ -1,10 +1,9 @@
 import request from "@/request";
 
-
 /** check POST /api/ */
 export async function updateUserAddFriend(
   body: API.UserFriendVo,
-  options?: { [key: string]: any }
+  options?: { [key: string]: any },
 ) {
   return request<any>("/api/userFriend/updateById", {
     method: "POST",
@@ -19,7 +18,7 @@ export async function updateUserAddFriend(
 /** check POST /api/ */
 export async function addUserFriend(
   body: API.UserFriendVo,
-  options?: { [key: string]: any }
+  options?: { [key: string]: any },
 ) {
   return request<any>("/api/userFriend/add", {
     method: "POST",
@@ -32,9 +31,7 @@ export async function addUserFriend(
 }
 
 /** receiveMessage POST /api/ */
-export async function selectAll(
-  options?: { [key: string]: any }
-) {
+export async function selectAll(options?: { [key: string]: any }) {
   return request<any>("/api/userFriend/selectAll", {
     method: "POST",
     ...(options || {}),
@@ -42,9 +39,7 @@ export async function selectAll(
 }
 
 /** receiveMessage POST /api/ */
-export async function selectAddAll(
-  options?: { [key: string]: any }
-) {
+export async function selectAddAll(options?: { [key: string]: any }) {
   return request<any>("/api/userFriend/selectAddAll", {
     method: "POST",
     ...(options || {}),

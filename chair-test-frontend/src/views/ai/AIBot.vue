@@ -128,7 +128,7 @@ const sendStream = async () => {
   try {
     const res = await aiBotStream(
       { userMessage: userMessage.value },
-      { signal }
+      { signal },
     );
 
     if (!res.ok) {
@@ -188,7 +188,7 @@ const sendStream = async () => {
               console.warn(
                 "JSON解析失败，原始字符串：",
                 JSON.stringify(jsonRaw),
-                parseErr
+                parseErr,
               );
               continue;
             }
@@ -228,7 +228,8 @@ const scrollToBottom = () => {
   max-width: 860px;
   margin: 0 auto;
   padding: 32px 24px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 h1 {

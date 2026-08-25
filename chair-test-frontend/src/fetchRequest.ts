@@ -1,13 +1,12 @@
 import { Message } from "@arco-design/web-vue";
 
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // const BASE_URL = "http://backend.chairabc.cloud";
 const TIMEOUT = 60000;
 
 // 请求拦截器
 type RequestInterceptor = (
-  config: RequestInit & { url: string }
+  config: RequestInit & { url: string },
 ) => RequestInit & { url: string };
 // 响应拦截器
 type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
@@ -57,7 +56,7 @@ addResponseInterceptor((response) => {
  */
 export async function fetchRequest(
   url: string,
-  options?: RequestInit & { timeout?: number }
+  options?: RequestInit & { timeout?: number },
 ): Promise<Response> {
   let config: RequestInit & { url: string } = {
     ...options,

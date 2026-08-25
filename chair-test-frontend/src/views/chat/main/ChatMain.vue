@@ -22,10 +22,10 @@ const getAllUser = async () => {
   const res = await selectAll();
   if (res.data.code === 0) {
     myFriends.value = res.data.data;
-  }else {
+  } else {
     message.warning(res.data.message);
   }
-}
+};
 
 onMounted(() => {
   document.addEventListener("click", handleDocumentClick);
@@ -38,7 +38,7 @@ onUnmounted(() => {
 const routerTo = (path: any) => {
   console.log(path);
   router.push(path);
-}
+};
 </script>
 
 <template>
@@ -46,9 +46,17 @@ const routerTo = (path: any) => {
   <main class="chat-window">
     <div class="divider-demo" v-for="item in myFriends">
       <div class="flex-box" @click="routerTo(`/web/chat/${item.friendId}`)">
-        <span class="avatar"><a-image class="img-avatar" width="40px" height="40px" :src="item.friendAvatar" /></span>
+        <span class="avatar"
+          ><a-image
+            class="img-avatar"
+            width="40px"
+            height="40px"
+            :src="item.friendAvatar"
+        /></span>
         <div class="content">
-          <a-typography-title :heading="6">{{item.userName}}</a-typography-title>
+          <a-typography-title :heading="6">{{
+            item.userName
+          }}</a-typography-title>
         </div>
       </div>
       <a-divider class="half-divider" />

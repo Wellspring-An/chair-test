@@ -9,7 +9,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   // 如果是聊天页面，确保连接
-  if (to.path.startsWith('web/chat')) {
+  if (to.path.startsWith("web/chat")) {
     chatController.connect();
   }
   next();
